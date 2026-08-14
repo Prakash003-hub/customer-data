@@ -51,7 +51,7 @@ export default function Navbar() {
         <div className="navbar-container">
           <div className="navbar-brand" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Smartphone size={22} color="var(--primary-color)" />
-            <span>Customer Management</span>
+            <span>SOS Customer Dataset</span>
           </div>
 
           {/* Desktop Nav Links */}

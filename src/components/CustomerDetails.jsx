@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, FileText, ExternalLink, Eye, Phone, MessageCircle, Edit2, Trash2, Save, Image as ImageIcon } from 'lucide-react';
+import { X, FileText, ExternalLink, Eye, Phone, MessageCircle, Edit2, Trash2, Save, Image as ImageIcon, Download } from 'lucide-react';
 import { api } from '../services/api';
 import Loader from './Loader';
 import DocumentUploader from './DocumentUploader';
@@ -34,6 +34,55 @@ export default function CustomerDetails({ customer, onClose, onRefresh }) {
     } catch {
       return dateStr;
     }
+  };
+
+  const getDriveFileId = (doc) => {
+    if (!doc) return null;
+    if (doc.DriveFileID) return doc.DriveFileID;
+    if (doc.driveFileId) return doc.driveFileId;
+    if (doc.DriveURL) {
+      const match = doc.DriveURL.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      if (match) return match[1];
+      const idParam = doc.DriveURL.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (idParam) return idParam[1];
+    }
+    return null;
+  };
+
+  const getDownloadUrl = (doc) => {
+    if (!doc) return '#';
+    if (doc.base64) return doc.base64;
+    const fileId = getDriveFileId(doc);
+    if (fileId) return `https://drive.google.com/uc?export=download&id=${fileId}`;
+    return doc.DriveURL || doc.url || '#';
+  };
+
+  const handleDownloadSingleDoc = (doc) => {
+    const url = getDownloadUrl(doc);
+    const fileName = doc.FileName || doc.name || 'document';
+    
+    if (doc.base64) {
+      const a = document.createElement('a');
+      a.href = doc.base64;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } else if (url && url !== '#') {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      alert("Download link unavailable for this document.");
+    }
+  };
+
+  const handleDownloadAllDocuments = () => {
+    if (!documents || documents.length === 0) return;
+    
+    documents.forEach((doc, index) => {
+      setTimeout(() => {
+        handleDownloadSingleDoc(doc);
+      }, index * 400);
+    });
   };
 
   const handleViewDocuments = React.useCallback(async () => {
@@ -296,17 +345,29 @@ export default function CustomerDetails({ customer, onClose, onRefresh }) {
             <hr style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '2rem 0' }} />
 
             <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 600 }}>Customer Documents</h3>
-                {documents && (
-                  <button 
-                    className="btn btn-secondary" 
-                    style={{ fontSize: '0.8rem', padding: '0.3rem 0.75rem' }} 
-                    onClick={handleViewDocuments}
-                    disabled={loadingDocs}
-                  >
-                    Refresh
-                  </button>
+                
+                {documents && documents.length > 0 && (
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                      className="btn btn-primary" 
+                      style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', gap: '0.35rem' }} 
+                      onClick={handleDownloadAllDocuments}
+                      title="Download all documents for this customer"
+                    >
+                      <Download size={14} /> Download All ({documents.length})
+                    </button>
+
+                    <button 
+                      className="btn btn-secondary" 
+                      style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }} 
+                      onClick={handleViewDocuments}
+                      disabled={loadingDocs}
+                    >
+                      Refresh
+                    </button>
+                  </div>
                 )}
               </div>
               
@@ -340,15 +401,25 @@ export default function CustomerDetails({ customer, onClose, onRefresh }) {
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
                           <button 
                             type="button"
                             className="btn btn-primary"
-                            style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                            style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem' }}
                             onClick={() => setPreviewDoc(doc)}
                             title="Preview Document in App"
                           >
                             <Eye size={15} /> Preview
+                          </button>
+
+                          <button 
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '0.4rem 0.75rem', fontSize: '0.85rem' }}
+                            onClick={() => handleDownloadSingleDoc(doc)}
+                            title="Download file"
+                          >
+                            <Download size={15} /> Download
                           </button>
                           
                           {doc.DriveURL && (
@@ -420,3 +491,4 @@ export default function CustomerDetails({ customer, onClose, onRefresh }) {
     </>
   );
 }
+

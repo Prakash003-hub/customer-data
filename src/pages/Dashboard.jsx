@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import Navbar from '../components/Navbar';
 import Loader from '../components/Loader';
@@ -7,6 +8,7 @@ import CustomerDetails from '../components/CustomerDetails';
 import { Phone, MessageCircle, Eye, CreditCard, MapPin } from 'lucide-react';
 
 export default function Dashboard() {
+  const location = useLocation();
   const [customers, setCustomers] = useState([]);
   const [filteredCustomers, setFilteredCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,6 +26,15 @@ export default function Dashboard() {
   
   const [selectedCustomer, setSelectedCustomer] = useState(null);
 
+  useEffect(() => {
+    if (location.state?.selectedCustomer) {
+      setSelectedCustomer(location.state.selectedCustomer);
+    }
+    if (location.state?.searchAadhaar) {
+      setFilters(prev => ({ ...prev, AadhaarNo: location.state.searchAadhaar }));
+    }
+  }, [location.state]);
+
   const fetchCustomers = async () => {
     setLoading(true);
     setError('');
@@ -32,6 +43,11 @@ export default function Dashboard() {
       if (result.success) {
         setCustomers(result.data);
         setFilteredCustomers(result.data);
+        // If redirected with an Aadhaar number, find matching customer
+        if (location.state?.searchAadhaar && !location.state?.selectedCustomer) {
+          const match = result.data.find(c => String(c.AadhaarNo).trim() === String(location.state.searchAadhaar).trim());
+          if (match) setSelectedCustomer(match);
+        }
       } else {
         setError(result.error || 'Failed to fetch customers');
       }
@@ -45,6 +61,7 @@ export default function Dashboard() {
   useEffect(() => {
     fetchCustomers();
   }, []);
+
 
   const applyFilters = React.useCallback(() => {
     let result = customers;

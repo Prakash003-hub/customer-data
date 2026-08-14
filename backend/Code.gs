@@ -242,7 +242,17 @@ function addCustomer(data) {
     const aadhaarIndex = headers.indexOf("AadhaarNo");
     for (let i = 1; i < sheetData.length; i++) {
       if (String(sheetData[i][aadhaarIndex]).trim() === aadhaar) {
-        return { success: false, error: "Customer with this Aadhaar Number already exists." };
+        let existingCustomer = {};
+        headers.forEach((header, index) => {
+          existingCustomer[header] = sheetData[i][index];
+        });
+        return { 
+          success: false, 
+          alreadyExists: true, 
+          error: "Customer with this Aadhaar Number already exists.",
+          customerId: existingCustomer.CustomerID,
+          customer: existingCustomer
+        };
       }
     }
   }
