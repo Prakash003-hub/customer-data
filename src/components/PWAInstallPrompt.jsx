@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Download, X, Smartphone } from 'lucide-react';
+import { Download, X, Smartphone, Zap } from 'lucide-react';
 
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
 
   useEffect(() => {
     // Check if running in standalone mode (already installed PWA)
@@ -16,7 +17,13 @@ export default function PWAInstallPrompt() {
       setIsStandalone(isStandaloneMode);
     };
 
+    const checkAndroid = () => {
+      const ua = navigator.userAgent || '';
+      setIsAndroid(/android/i.test(ua));
+    };
+
     checkStandalone();
+    checkAndroid();
 
     const handleBeforeInstallPrompt = async (e) => {
       e.preventDefault();
@@ -25,7 +32,7 @@ export default function PWAInstallPrompt() {
 
       if (!isStandalone) {
         setShowPrompt(true);
-        // Direct automatic native install prompt trigger on load
+        // Automatic native install prompt trigger attempt on Android
         try {
           await e.prompt();
           const { outcome } = await e.userChoice;
@@ -33,16 +40,16 @@ export default function PWAInstallPrompt() {
             setShowPrompt(false);
             setDeferredPrompt(null);
           }
-        } catch (err) {
-          console.log("Native prompt waiting for user interaction");
+        } catch (_err) {
+          // Waiting for user interaction
         }
       }
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Direct auto-trigger on first user tap/click on screen
-    const handleFirstTouch = async () => {
+    // Direct auto-trigger on first user tap/click on Android screen
+    const handleFirstGesture = async () => {
       const promptObj = window._pwaDeferredPrompt || deferredPrompt;
       if (promptObj && !isStandalone) {
         try {
@@ -51,17 +58,19 @@ export default function PWAInstallPrompt() {
           if (outcome === 'accepted') {
             setShowPrompt(false);
           }
-        } catch (err) { }
+        } catch (_err) {
+          // ignore
+        }
       }
     };
 
-    window.addEventListener('click', handleFirstTouch, { once: true });
-    window.addEventListener('touchstart', handleFirstTouch, { once: true });
+    window.addEventListener('click', handleFirstGesture, { once: true });
+    window.addEventListener('touchstart', handleFirstGesture, { once: true });
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      window.removeEventListener('click', handleFirstTouch);
-      window.removeEventListener('touchstart', handleFirstGesture => { });
+      window.removeEventListener('click', handleFirstGesture);
+      window.removeEventListener('touchstart', handleFirstGesture);
     };
   }, [isStandalone, deferredPrompt]);
 
@@ -83,8 +92,7 @@ export default function PWAInstallPrompt() {
         setIsInstalling(false);
       }
     } else {
-      // Trigger native browser install action if available
-      alert("Browser preparing native install... Please tap Install on the popup prompt.");
+      alert("Opening native install prompt... If no popup appears, tap the top menu (⋮) -> 'Install App' or 'Add to Home screen'.");
     }
   };
 
@@ -104,7 +112,7 @@ export default function PWAInstallPrompt() {
         color: '#ffffff',
         padding: '1.25rem',
         borderRadius: '1rem',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.4)',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
         zIndex: 9999,
         border: '1px solid #374151',
         animation: 'slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards'
@@ -126,11 +134,18 @@ export default function PWAInstallPrompt() {
             <Smartphone size={26} color="#ffffff" />
           </div>
           <div>
-            <h4 style={{ fontWeight: 700, fontSize: '1.05rem', margin: 0, color: '#ffffff' }}>
-              Install Customer App
-            </h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <h4 style={{ fontWeight: 700, fontSize: '1.05rem', margin: 0, color: '#ffffff' }}>
+                SOS Customer Dataset
+              </h4>
+              {isAndroid && (
+                <span style={{ fontSize: '0.7rem', backgroundColor: '#10b981', color: '#ffffff', padding: '0.1rem 0.4rem', borderRadius: '0.25rem', fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                  <Zap size={10} /> Android
+                </span>
+              )}
+            </div>
             <p style={{ fontSize: '0.8rem', color: '#9ca3af', margin: 0 }}>
-              Direct 1-Click Native Installation
+              1-Click Auto Install App on Phone
             </p>
           </div>
         </div>
@@ -176,7 +191,7 @@ export default function PWAInstallPrompt() {
           boxShadow: '0 4px 14px rgba(79, 70, 229, 0.4)'
         }}
       >
-        <Download size={18} /> {isInstalling ? 'Installing...' : 'Install Now'}
+        <Download size={18} /> {isInstalling ? 'Installing...' : 'Install Android App'}
       </button>
     </div>
   );

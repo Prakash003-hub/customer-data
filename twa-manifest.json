@@ -1,0 +1,20 @@
+{
+  "packageId": "com.soscustomer.dataset",
+  "host": "your-app-domain.com",
+  "name": "SOS Customer Dataset",
+  "launcherName": "SOS Customer",
+  "display": "standalone",
+  "themeColor": "#4F46E5",
+  "navigationColor": "#4F46E5",
+  "backgroundColor": "#FFFFFF",
+  "startUrl": "/",
+  "iconUrl": "https://your-app-domain.com/pwa-512x512.svg",
+  "maskableIconUrl": "https://your-app-domain.com/pwa-512x512.svg",
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "signingKey": {
+    "path": "./android-keystore.ks",
+    "alias": "android"
+  },
+  "generatorApp": "bubblewrap-cli"
+}

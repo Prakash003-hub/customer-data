@@ -1,4 +1,12 @@
-<svg xmlns="http://www.svgrepo.com/show/305223/user.svg" width="192" height="192" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-  <circle cx="12" cy="7" r="4"></circle>
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" fill="none">
+  <rect width="192" height="192" rx="42" fill="url(#grad192)"/>
+  <defs>
+    <linearGradient id="grad192" x1="0" y1="0" x2="192" y2="192" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4F46E5"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+  </defs>
+  <path d="M96 38L48 58V98C48 132.8 68.6 153.2 96 162C123.4 153.2 144 132.8 144 98V58L96 38Z" stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M116 128V122C116 111.4 107 102 96 102C85 102 76 111.4 76 122V128" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="96" cy="80" r="16" stroke="#FFFFFF" stroke-width="7"/>
 </svg>
