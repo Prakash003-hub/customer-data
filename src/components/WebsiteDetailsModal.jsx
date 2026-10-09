@@ -12,11 +12,16 @@ import {
   Edit3, 
   Trash2, 
   Info,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Share2
 } from 'lucide-react';
+import FormattedContent from './FormattedContent';
+import ShareDocumentsModal from './ShareDocumentsModal';
+import { parseDocumentList } from '../utils/documentUtils';
 
 export default function WebsiteDetailsModal({ website, onClose, onEdit, onDelete, showToast }) {
   const [copiedUrl, setCopiedUrl] = useState(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   if (!website) return null;
 
@@ -27,9 +32,7 @@ export default function WebsiteDetailsModal({ website, onClose, onEdit, onDelete
     setTimeout(() => setCopiedUrl(null), 2000);
   };
 
-  const docList = Array.isArray(website.documentRequirements) 
-    ? website.documentRequirements 
-    : (website.documentRequirements || '').split(',').map(s => s.trim()).filter(Boolean);
+  const docList = parseDocumentList(website.documentRequirements);
 
   const urlList = Array.isArray(website.urls) ? website.urls : [];
 
@@ -61,6 +64,15 @@ export default function WebsiteDetailsModal({ website, onClose, onEdit, onDelete
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button 
+              type="button"
+              className="btn-icon" 
+              onClick={() => setIsShareModalOpen(true)} 
+              title="Share Document Requirements on WhatsApp"
+              style={{ color: '#25D366' }}
+            >
+              <Share2 size={18} />
+            </button>
             {onEdit && (
               <button className="btn-icon" onClick={() => { onClose(); onEdit(website); }} title="Edit Website">
                 <Edit3 size={18} />
@@ -82,12 +94,12 @@ export default function WebsiteDetailsModal({ website, onClose, onEdit, onDelete
           {/* Description */}
           {website.description && (
             <div>
-              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', uppercase: true, marginBottom: '0.35rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.45rem' }}>
                 ABOUT THIS PORTAL
               </h3>
-              <p style={{ fontSize: '0.95rem', color: 'var(--text-main)', lineHeight: 1.5 }}>
-                {website.description}
-              </p>
+              <div style={{ backgroundColor: '#f8fafc', padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)' }}>
+                <FormattedContent content={website.description} />
+              </div>
             </div>
           )}
 
@@ -129,34 +141,84 @@ export default function WebsiteDetailsModal({ website, onClose, onEdit, onDelete
 
           {/* Document Requirements Checklist */}
           <div>
-            <h3 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', uppercase: true, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <FileText size={15} color="var(--primary-color)" />
-              REQUIRED DOCUMENTS ({docList.length})
-            </h3>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <h3 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '0.4rem', letterSpacing: '0.04em' }}>
+                <FileText size={16} color="var(--primary-color)" />
+                REQUIRED DOCUMENTS ({docList.length})
+              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {docList.length > 0 && (
+                  <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#059669', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '0.15rem 0.6rem', borderRadius: '1rem' }}>
+                    {docList.length} {docList.length === 1 ? 'Document' : 'Documents'}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsShareModalOpen(true)}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.3rem 0.75rem',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    backgroundColor: '#25D366',
+                    color: '#ffffff',
+                    borderRadius: '0.45rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(37, 211, 102, 0.25)',
+                    transition: 'all 0.15s ease'
+                  }}
+                  title="Share Document Requirements on WhatsApp"
+                >
+                  <Share2 size={13} />
+                  <span>Share List</span>
+                </button>
+              </div>
+            </div>
+
             {docList.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '0.55rem' }}>
                 {docList.map((doc, idx) => (
                   <div 
                     key={idx} 
                     style={{ 
                       display: 'flex', 
                       alignItems: 'center', 
-                      gap: '0.5rem', 
-                      padding: '0.5rem 0.75rem', 
-                      backgroundColor: '#f8fafc', 
-                      border: '1px solid var(--border-color)', 
-                      borderRadius: '0.5rem',
-                      fontSize: '0.875rem',
-                      fontWeight: 500
+                      gap: '0.65rem', 
+                      padding: '0.65rem 0.85rem', 
+                      backgroundColor: '#ffffff', 
+                      border: '1.5px solid #e2e8f0', 
+                      borderRadius: '0.65rem',
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      color: 'var(--text-main)',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.03)'
                     }}
                   >
+                    <span style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                      color: '#059669',
+                      fontSize: '0.75rem',
+                      fontWeight: 700,
+                      flexShrink: 0
+                    }}>
+                      {idx + 1}
+                    </span>
                     <ShieldCheck size={16} color="var(--success)" style={{ flexShrink: 0 }} />
-                    <span>{doc}</span>
+                    <span style={{ wordBreak: 'break-word', flex: 1 }}>{doc}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.5rem 0' }}>
                 No specific document requirements listed.
               </p>
             )}
@@ -181,7 +243,7 @@ export default function WebsiteDetailsModal({ website, onClose, onEdit, onDelete
                       backgroundColor: '#ffffff', 
                       border: '1px solid var(--border-color)', 
                       borderRadius: '0.5rem',
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.03)'
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
                     }}
                   >
                     <div>
@@ -236,10 +298,20 @@ export default function WebsiteDetailsModal({ website, onClose, onEdit, onDelete
         </div>
 
         {/* Modal Footer */}
-        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <button className="btn btn-secondary" onClick={onClose}>
-            Close
-          </button>
+        <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button className="btn btn-secondary" onClick={onClose}>
+              Close
+            </button>
+            <button 
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setIsShareModalOpen(true)}
+              style={{ color: '#15803d', borderColor: '#86efac', backgroundColor: '#f0fdf4', fontWeight: 600, gap: '0.35rem' }}
+            >
+              <Share2 size={15} /> Share Documents
+            </button>
+          </div>
 
           {urlList.length > 0 && (
             <a 
@@ -254,6 +326,15 @@ export default function WebsiteDetailsModal({ website, onClose, onEdit, onDelete
           )}
         </div>
       </div>
+
+      {/* Share Document Requirements Modal */}
+      {isShareModalOpen && (
+        <ShareDocumentsModal 
+          website={website}
+          onClose={() => setIsShareModalOpen(false)}
+          showToast={showToast}
+        />
+      )}
     </div>
   );
 }

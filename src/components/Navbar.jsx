@@ -107,7 +107,7 @@ export default function Navbar() {
           </div>
 
           {/* Mobile Top Header Install Button */}
-          <div className="mobile-header-actions" style={{ display: 'none' }}>
+          <div className="mobile-header-actions">
             {!isStandalone && (
               <button
                 onClick={handleInstallClick}

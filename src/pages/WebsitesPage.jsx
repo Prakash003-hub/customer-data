@@ -3,7 +3,10 @@ import Navbar from '../components/Navbar';
 import Loader from '../components/Loader';
 import WebsiteDetailsModal from '../components/WebsiteDetailsModal';
 import ManageCategoriesModal from '../components/ManageCategoriesModal';
+import ShareDocumentsModal from '../components/ShareDocumentsModal';
+import FormattedContent from '../components/FormattedContent';
 import { api } from '../services/api';
+import { parseDocumentList } from '../utils/documentUtils';
 import { 
   Globe, 
   Search, 
@@ -11,8 +14,117 @@ import {
   Trash2, 
   X, 
   AlertCircle,
-  Tag
+  Tag,
+  ShieldCheck,
+  Landmark,
+  Car,
+  Plane,
+  Award,
+  Zap,
+  Layers,
+  Folder,
+  ArrowLeft,
+  ChevronRight,
+  ChevronDown,
+  ExternalLink,
+  Copy,
+  Check,
+  FileText,
+  CreditCard,
+  DollarSign,
+  Edit3,
+  Info,
+  Grid,
+  List,
+  Share2
 } from 'lucide-react';
+
+const CATEGORY_META = {
+  'Identity & Governance': {
+    icon: ShieldCheck,
+    color: '#4f46e5',
+    bg: '#eef2ff',
+    border: '#c7d2fe',
+    accentGradient: 'linear-gradient(90deg, #4f46e5 0%, #6366f1 100%)',
+    gradient: 'linear-gradient(180deg, rgba(79, 70, 229, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(79, 70, 229, 0.16)',
+    description: 'Aadhaar, Voter ID, Civic IDs & Citizen Identity Services'
+  },
+  'Banking & Tax': {
+    icon: Landmark,
+    color: '#059669',
+    bg: '#ecfdf5',
+    border: '#a7f3d0',
+    accentGradient: 'linear-gradient(90deg, #059669 0%, #10b981 100%)',
+    gradient: 'linear-gradient(180deg, rgba(5, 150, 105, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(5, 150, 105, 0.16)',
+    description: 'PAN Card, Income Tax e-Filing, Net Banking & Tax Portals'
+  },
+  'Transport & Vehicles': {
+    icon: Car,
+    color: '#d97706',
+    bg: '#fffbeb',
+    border: '#fde68a',
+    accentGradient: 'linear-gradient(90deg, #d97706 0%, #f59e0b 100%)',
+    gradient: 'linear-gradient(180deg, rgba(217, 119, 6, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(217, 119, 6, 0.16)',
+    description: 'Driving License, Sarathi, Vahan, RC Transfer & RTO Portals'
+  },
+  'Travel & Identity': {
+    icon: Plane,
+    color: '#0284c7',
+    bg: '#f0f9ff',
+    border: '#bae6fd',
+    accentGradient: 'linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%)',
+    gradient: 'linear-gradient(180deg, rgba(2, 132, 199, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(2, 132, 199, 0.16)',
+    description: 'Passport Seva, Visa, Train / Flight & Tourism Services'
+  },
+  'Government Schemes': {
+    icon: Award,
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+    accentGradient: 'linear-gradient(90deg, #7c3aed 0%, #8b5cf6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(124, 58, 237, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(124, 58, 237, 0.16)',
+    description: 'PM Kisan, DBT, Ration Card, Pensions & Welfare Schemes'
+  },
+  'Utilities & Bills': {
+    icon: Zap,
+    color: '#ea580c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #f97316 100%)',
+    gradient: 'linear-gradient(180deg, rgba(234, 88, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(234, 88, 12, 0.16)',
+    description: 'Electricity, Water, LPG Gas, Fastag & Bill Payments'
+  },
+  'Other': {
+    icon: Layers,
+    color: '#475569',
+    bg: '#f8fafc',
+    border: '#cbd5e1',
+    accentGradient: 'linear-gradient(90deg, #475569 0%, #64748b 100%)',
+    gradient: 'linear-gradient(180deg, rgba(71, 85, 105, 0.04) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(71, 85, 105, 0.14)',
+    description: 'General Portals, Forms, Educational & Miscellaneous Services'
+  }
+};
+
+const getCategoryMeta = (catName) => {
+  if (CATEGORY_META[catName]) return CATEGORY_META[catName];
+  return {
+    icon: Folder,
+    color: '#4f46e5',
+    bg: '#eef2ff',
+    border: '#c7d2fe',
+    accentGradient: 'linear-gradient(90deg, #4f46e5 0%, #6366f1 100%)',
+    gradient: 'linear-gradient(180deg, rgba(79, 70, 229, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(79, 70, 229, 0.16)',
+    description: `${catName} portals and service methods`
+  };
+};
 
 const SUGGESTED_DOCUMENTS = [
   "Aadhaar Card",
@@ -37,13 +149,20 @@ export default function WebsitesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   
+  // View mode & copy state (default to separate view UI)
+  const [viewMode, setViewMode] = useState('separate'); // 'groups' | 'separate' | 'grid'
+  const [copiedUrl, setCopiedUrl] = useState(null);
+  const [expandedAccordionCats, setExpandedAccordionCats] = useState({});
+
   // Modal states
   const [selectedDetailsWebsite, setSelectedDetailsWebsite] = useState(null);
+  const [sharingWebsite, setSharingWebsite] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isManageCategoriesOpen, setIsManageCategoriesOpen] = useState(false);
   const [editingWebsite, setEditingWebsite] = useState(null);
   const [deletingWebsite, setDeletingWebsite] = useState(null);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [isPreviewingDescription, setIsPreviewingDescription] = useState(false);
 
   // Inline New Category creation state inside Add/Edit form
   const [isAddingNewCategoryInline, setIsAddingNewCategoryInline] = useState(false);
@@ -72,7 +191,11 @@ export default function WebsitesPage() {
       ]);
 
       if (webRes.success && Array.isArray(webRes.data)) {
-        setWebsites(webRes.data);
+        const normalized = webRes.data.map(site => ({
+          ...site,
+          documentRequirements: parseDocumentList(site.documentRequirements)
+        }));
+        setWebsites(normalized);
       } else {
         setError(webRes.error || 'Failed to load websites');
       }
@@ -98,10 +221,40 @@ export default function WebsitesPage() {
     }, 3000);
   };
 
+  const toggleAccordionCat = (catName) => {
+    setExpandedAccordionCats(prev => ({
+      ...prev,
+      [catName]: !prev[catName]
+    }));
+  };
+
+  const handleCopyMethodUrl = (url, label) => {
+    if (!url) return;
+    navigator.clipboard.writeText(url);
+    setCopiedUrl(url);
+    showToast(`Copied ${label || 'link'}!`);
+    setTimeout(() => setCopiedUrl(null), 2000);
+  };
+
   // Available categories list for filter tabs (includes 'All')
   const allCategoryTabs = useMemo(() => {
     return ['All', ...categories];
   }, [categories]);
+
+  // Group portals by category for Category Group UI
+  const categoryGroups = useMemo(() => {
+    return categories.map(cat => {
+      const sites = websites.filter(site => site.category === cat);
+      const totalMethods = sites.reduce((acc, site) => acc + (Array.isArray(site.urls) ? site.urls.length : 0), 0);
+      return {
+        name: cat,
+        sites,
+        portalCount: sites.length,
+        methodCount: totalMethods,
+        meta: getCategoryMeta(cat)
+      };
+    });
+  }, [categories, websites]);
 
   // Filter websites based on search query and category
   const filteredWebsites = useMemo(() => {
@@ -132,8 +285,17 @@ export default function WebsitesPage() {
   }, [websites, searchQuery, selectedCategory]);
 
   // Modal Handlers
+
+  const handleInsertDescriptionTemplate = (template) => {
+    setFormData(prev => ({
+      ...prev,
+      description: prev.description ? `${prev.description}\n\n${template}` : template
+    }));
+  };
+
   const handleOpenAddModal = () => {
     setEditingWebsite(null);
+    setIsPreviewingDescription(false);
     setIsAddingNewCategoryInline(false);
     setInlineCategoryInput('');
     setFormData({
@@ -147,7 +309,7 @@ export default function WebsitesPage() {
       notes: '',
       urls: [
         { label: 'Official Portal', url: '' },
-        { label: 'Apply Online', url: '' }
+        { label: 'Link', url: '' }
       ]
     });
     setIsAddModalOpen(true);
@@ -155,13 +317,14 @@ export default function WebsitesPage() {
 
   const handleOpenEditModal = (site) => {
     setEditingWebsite(site);
+    setIsPreviewingDescription(false);
     setIsAddingNewCategoryInline(false);
     setInlineCategoryInput('');
     setFormData({
       name: site.name || '',
       category: site.category || categories[0] || 'Identity & Governance',
       description: site.description || '',
-      documentRequirements: Array.isArray(site.documentRequirements) ? [...site.documentRequirements] : [],
+      documentRequirements: parseDocumentList(site.documentRequirements),
       customDocInput: '',
       payFee: site.payFee || '',
       charges: site.charges || '',
@@ -210,16 +373,25 @@ export default function WebsitesPage() {
     });
   };
 
-  const handleAddDocTag = (doc) => {
-    const trimmed = doc.trim();
-    if (!trimmed) return;
-    if (!formData.documentRequirements.includes(trimmed)) {
-      setFormData(prev => ({
+  const handleAddDocTag = (docInput) => {
+    if (!docInput) return;
+    const newItems = parseDocumentList(docInput);
+    if (newItems.length === 0) return;
+    setFormData(prev => {
+      const existing = new Set(prev.documentRequirements);
+      const combined = [...prev.documentRequirements];
+      for (const item of newItems) {
+        if (!existing.has(item)) {
+          combined.push(item);
+          existing.add(item);
+        }
+      }
+      return {
         ...prev,
-        documentRequirements: [...prev.documentRequirements, trimmed],
+        documentRequirements: combined,
         customDocInput: ''
-      }));
-    }
+      };
+    });
   };
 
   const handleRemoveDocTag = (docToRemove) => {
@@ -247,11 +419,21 @@ export default function WebsitesPage() {
       return;
     }
 
+    // Automatically parse any typed text left in customDocInput as well
+    let allDocs = [...formData.documentRequirements];
+    if (formData.customDocInput && formData.customDocInput.trim()) {
+      const pendingDocs = parseDocumentList(formData.customDocInput);
+      for (const d of pendingDocs) {
+        if (!allDocs.includes(d)) allDocs.push(d);
+      }
+    }
+    const cleanedDocumentRequirements = parseDocumentList(allDocs);
+
     const payload = {
       name: formData.name.trim(),
       category: formData.category,
       description: formData.description.trim(),
-      documentRequirements: formData.documentRequirements,
+      documentRequirements: cleanedDocumentRequirements,
       payFee: formData.payFee.trim() || 'N/A',
       charges: formData.charges.trim() || 'N/A',
       notes: formData.notes.trim(),
@@ -291,20 +473,198 @@ export default function WebsitesPage() {
     }
   };
 
+  const renderPortalAppBox = (site, currentMeta) => {
+    const meta = currentMeta || getCategoryMeta(site.category);
+    return (
+      <div 
+        key={site.id} 
+        className="website-app-box-card"
+        style={{
+          border: `2px solid ${meta.color || '#4f46e5'}`,
+          background: `linear-gradient(180deg, #ffffff 40%, ${meta.bg || '#f5f3ff'} 100%)`,
+          boxShadow: `0 4px 16px ${meta.glow || 'rgba(79, 70, 229, 0.08)'}`,
+          position: 'relative',
+          overflow: 'hidden',
+          paddingTop: '1.25rem'
+        }}
+      >
+        {/* Top 4px Category Accent Stripe */}
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          background: meta.accentGradient || meta.color || '#4f46e5'
+        }} />
+
+        {/* Box Header: App Icon + Category Tag + Actions */}
+        <div className="app-box-header">
+          <div 
+            className="app-box-icon" 
+            style={{ 
+              backgroundColor: meta.bg || '#eef2ff', 
+              color: meta.color || '#4f46e5',
+              border: `1.5px solid ${meta.border || '#c7d2fe'}`
+            }}
+          >
+            <Globe size={22} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <button 
+              type="button" 
+              className="btn-icon-subtle" 
+              onClick={(e) => { e.stopPropagation(); setSharingWebsite(site); }}
+              title="Share Document Requirements on WhatsApp"
+              style={{ color: '#25D366' }}
+            >
+              <Share2 size={15} />
+            </button>
+            <button 
+              type="button" 
+              className="btn-icon-subtle" 
+              onClick={(e) => { e.stopPropagation(); handleOpenEditModal(site); }}
+              title="Edit Portal"
+            >
+              <Edit3 size={15} />
+            </button>
+            <button 
+              type="button" 
+              className="btn-icon-subtle danger" 
+              onClick={(e) => { e.stopPropagation(); setDeletingWebsite(site); }}
+              title="Delete Portal"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+        </div>
+
+        {/* App Box Title & Badges */}
+        <div className="app-box-content">
+          <h3 className="app-box-title" title={site.name}>
+            {site.name}
+          </h3>
+          <div className="app-box-badges">
+            <span className="app-box-badge fee">
+              <CreditCard size={11} /> {site.payFee || 'Free'}
+            </span>
+            <span className="app-box-badge charge">
+              <DollarSign size={11} /> {site.charges || '₹0'}
+            </span>
+            {Array.isArray(site.documentRequirements) && site.documentRequirements.length > 0 && (
+              <span className="app-box-badge fee" style={{ backgroundColor: 'rgba(16, 185, 129, 0.08)', color: '#059669', borderColor: 'rgba(16, 185, 129, 0.25)' }}>
+                <FileText size={11} /> {site.documentRequirements.length} {site.documentRequirements.length === 1 ? 'Doc' : 'Docs'}
+              </span>
+            )}
+            {site.category && (
+              <span style={{ fontSize: '0.7rem', fontWeight: 600, color: meta.color, backgroundColor: meta.bg, padding: '0.15rem 0.45rem', borderRadius: '0.35rem', border: `1px solid ${meta.border}` }}>
+                {site.category}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Action Methods List inside the App Box */}
+        {Array.isArray(site.urls) && site.urls.length > 0 && (
+          <div className="app-box-methods-container" style={{ border: `1.5px solid ${meta.border || '#e2e8f0'}`, backgroundColor: '#ffffff' }}>
+            <div className="app-box-methods-header" style={{ color: meta.color || 'var(--primary-color)' }}>
+              <ExternalLink size={11} color={meta.color || 'var(--primary-color)'} />
+              <span>Action Methods ({site.urls.length})</span>
+            </div>
+            <div className="app-box-methods-list">
+              {site.urls.slice(0, 3).map((method, mIdx) => (
+                <div key={mIdx} className="app-box-method-item" style={{ border: `1px solid ${meta.border || 'var(--border-color)'}` }}>
+                  <span className="app-box-method-name" title={method.label || 'Link'}>
+                    {method.label || 'Link'}
+                  </span>
+                  <div className="app-box-method-actions">
+                    <a 
+                      href={method.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="app-box-link-btn"
+                      title={`Open ${method.label || 'Link'}`}
+                    >
+                      Open <ExternalLink size={10} />
+                    </a>
+                    <button 
+                      type="button"
+                      onClick={() => handleCopyMethodUrl(method.url, method.label)}
+                      className="app-box-copy-btn"
+                      title="Copy URL"
+                    >
+                      {copiedUrl === method.url ? <Check size={11} color="var(--success)" /> : <Copy size={11} />}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {site.urls.length > 3 && (
+                <button 
+                  type="button" 
+                  onClick={() => setSelectedDetailsWebsite(site)}
+                  style={{ background: 'none', border: 'none', color: meta.color || 'var(--primary-color)', fontSize: '0.72rem', fontWeight: 700, cursor: 'pointer', textAlign: 'center', paddingTop: '0.2rem' }}
+                >
+                  +{site.urls.length - 3} more methods...
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Box Footer Button */}
+        <div style={{ display: 'flex', gap: '0.4rem', marginTop: 'auto' }}>
+          <button 
+            type="button" 
+            className="app-box-footer-btn"
+            onClick={() => setSelectedDetailsWebsite(site)}
+            style={{ 
+              flex: 1, 
+              border: `1.5px solid ${meta.border || 'var(--border-color)'}`,
+              fontWeight: 700 
+            }}
+          >
+            <Info size={13} color={meta.color} /> Full Guide & Info
+          </button>
+          <button
+            type="button"
+            className="app-box-footer-btn"
+            onClick={(e) => { e.stopPropagation(); setSharingWebsite(site); }}
+            style={{ 
+              width: 'auto', 
+              padding: '0.45rem 0.65rem', 
+              color: '#15803d', 
+              backgroundColor: '#f0fdf4',
+              borderColor: '#86efac',
+              borderWidth: '1.5px',
+              borderStyle: 'solid',
+              flexShrink: 0
+            }}
+            title="Share Document Requirements on WhatsApp"
+          >
+            <Share2 size={13} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="app-container">
       <Navbar />
 
       <main className="main-content">
-        {/* Header Section */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+        {/* Top Header & Search Content (Hidden when a category is selected) */}
+        {selectedCategory === 'All' && (
+          <>
+            {/* Header Section */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <Globe size={28} color="var(--primary-color)" />
               <h1 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-main)' }}>Websites Directory</h1>
             </div>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-              Tap any app icon to view full details, required documents, fees, and direct links.
+              Tap any category group to view sub-services, action methods, required documents, and direct links.
             </p>
           </div>
 
@@ -328,15 +688,15 @@ export default function WebsitesPage() {
           </div>
         </div>
 
-        {/* Search & Category Tabs Bar */}
+        {/* Search, View Switcher & Category Tabs Bar */}
         <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1rem' }}>
-            <div className="search-box" style={{ flex: '1 1 300px' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+            <div className="search-box" style={{ flex: '1 1 280px' }}>
               <Search className="search-icon" size={18} />
               <input 
                 type="text" 
                 className="search-input" 
-                placeholder="Search web portals by name, document, fee, or link..."
+                placeholder="Search portals, methods, documents, or fees..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -350,16 +710,94 @@ export default function WebsitesPage() {
               )}
             </div>
 
-            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-              Showing {filteredWebsites.length} of {websites.length} Apps
+            {/* View Mode Switcher */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'inline-flex', backgroundColor: '#f1f5f9', padding: '0.25rem', borderRadius: '0.6rem', gap: '0.2rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('groups')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '0.45rem',
+                    fontSize: '0.8rem',
+                    fontWeight: viewMode === 'groups' ? 700 : 500,
+                    backgroundColor: viewMode === 'groups' ? '#ffffff' : 'transparent',
+                    color: viewMode === 'groups' ? 'var(--primary-color)' : 'var(--text-muted)',
+                    border: 'none',
+                    boxShadow: viewMode === 'groups' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease'
+                  }}
+                  title="Ultra Color Category Cards"
+                >
+                  <Folder size={14} />
+                  <span>Category Cards</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setViewMode('separate')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '0.45rem',
+                    fontSize: '0.8rem',
+                    fontWeight: viewMode === 'separate' ? 700 : 500,
+                    backgroundColor: viewMode === 'separate' ? '#ffffff' : 'transparent',
+                    color: viewMode === 'separate' ? 'var(--primary-color)' : 'var(--text-muted)',
+                    border: 'none',
+                    boxShadow: viewMode === 'separate' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease'
+                  }}
+                  title="Separate Category View Mode"
+                >
+                  <Layers size={14} />
+                  <span>Separate Sections</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setViewMode('grid')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '0.35rem',
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '0.45rem',
+                    fontSize: '0.8rem',
+                    fontWeight: viewMode === 'grid' ? 700 : 500,
+                    backgroundColor: viewMode === 'grid' ? '#ffffff' : 'transparent',
+                    color: viewMode === 'grid' ? 'var(--primary-color)' : 'var(--text-muted)',
+                    border: 'none',
+                    boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.18s ease'
+                  }}
+                  title="All Portals Grid"
+                >
+                  <Grid size={14} />
+                  <span>All Portals</span>
+                </button>
+              </div>
+
+              <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                {websites.length} Portals
+              </div>
             </div>
           </div>
 
           {/* Dynamic Category Filter Pills */}
-          <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.3rem', scrollbarWidth: 'thin' }}>
+          <div className="category-filter-scroll">
             {allCategoryTabs.map(cat => (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setSelectedCategory(cat)}
                 style={{
                   padding: '0.4rem 0.85rem',
@@ -375,11 +813,13 @@ export default function WebsitesPage() {
                   transition: 'all 0.2s'
                 }}
               >
-                {cat}
+                {cat === 'All' ? '📁 All Categories' : cat}
               </button>
             ))}
           </div>
         </div>
+        </>
+        )}
 
         {/* Loading / Error States */}
         {loading ? (
@@ -392,93 +832,461 @@ export default function WebsitesPage() {
               Retry
             </button>
           </div>
-        ) : filteredWebsites.length === 0 ? (
-          <div className="card" style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--text-muted)' }}>
-            <Globe size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-            <h3 style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.5rem' }}>No web apps found</h3>
-            <p style={{ fontSize: '0.9rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
-              {searchQuery || selectedCategory !== 'All' 
-                ? 'Try adjusting your search query or category filter.' 
-                : 'Click the button below to add your first web portal.'}
-            </p>
-            {(searchQuery || selectedCategory !== 'All') && (
+        ) : searchQuery.trim().length > 0 ? (
+          /* Search Results View */
+          <div>
+            <div className="category-breadcrumb-bar">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Search size={18} color="var(--primary-color)" />
+                <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--text-main)' }}>
+                  Search Results for "{searchQuery}"
+                </span>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', backgroundColor: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '1rem' }}>
+                  {filteredWebsites.length} Portals Found
+                </span>
+              </div>
               <button 
+                type="button"
                 className="btn btn-secondary" 
-                onClick={() => { setSearchQuery(''); setSelectedCategory('All'); }}
+                onClick={() => setSearchQuery('')}
+                style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
               >
-                Reset Search Filters
+                Clear Search
               </button>
+            </div>
+
+            {filteredWebsites.length === 0 ? (
+              <div className="card" style={{ textAlign: 'center', padding: '3rem 1rem', color: 'var(--text-muted)' }}>
+                <Globe size={40} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
+                <h3 style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.5rem' }}>No results matched "{searchQuery}"</h3>
+                <p style={{ fontSize: '0.875rem' }}>Try searching by portal name, method name, document requirement, or fee.</p>
+              </div>
+            ) : (
+              <div className="portal-app-box-grid">
+                {filteredWebsites.map(site => renderPortalAppBox(site))}
+              </div>
+            )}
+          </div>
+        ) : selectedCategory === 'All' ? (
+          /* ALL CATEGORIES VIEW MODES: 'groups' | 'separate' | 'grid' */
+          <div>
+            {viewMode === 'separate' ? (
+              /* SEPARATE CATEGORY SECTIONS MODE */
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Layers size={22} color="var(--primary-color)" />
+                      <span>Separate Category Directory Sections</span>
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      Each category displayed in its own dedicated section with direct Box Apps, action methods, fees, and docs.
+                    </p>
+                  </div>
+                  <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--primary-color)', backgroundColor: 'var(--primary-light)', padding: '0.35rem 0.85rem', borderRadius: '1rem', border: '1px solid var(--primary-border)' }}>
+                    {categoryGroups.length} Separate Categories
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                  {categoryGroups.map(group => {
+                    const IconComponent = group.meta.icon || Folder;
+                    return (
+                      <div 
+                        key={group.name} 
+                        className="separate-category-section-container"
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          gap: '1.25rem',
+                          padding: '1.4rem',
+                          backgroundColor: group.meta.bg || '#f8f9ff',
+                          border: `2px solid ${group.meta.color || '#4f46e5'}`,
+                          borderRadius: 'var(--radius-2xl)',
+                          boxShadow: `0 6px 22px ${group.meta.glow || 'rgba(79, 70, 229, 0.08)'}`,
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {/* Top 5px Vibrant Category Gradient Banner */}
+                        <div style={{ 
+                          position: 'absolute', 
+                          top: 0, 
+                          left: 0, 
+                          right: 0, 
+                          height: '5px', 
+                          background: group.meta.accentGradient || group.meta.color || '#4f46e5' 
+                        }} />
+
+                        {/* Separate Category Section Header Banner */}
+                        <div style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '1rem 1.35rem',
+                          backgroundColor: '#ffffff',
+                          border: `1.5px solid ${group.meta.border}`,
+                          borderRadius: 'var(--radius-xl)',
+                          boxShadow: `0 2px 10px rgba(0,0,0,0.03)`,
+                          flexWrap: 'wrap',
+                          gap: '0.85rem'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
+                            <div style={{ 
+                              width: '46px', 
+                              height: '46px', 
+                              borderRadius: '0.75rem', 
+                              backgroundColor: group.meta.bg, 
+                              color: group.meta.color, 
+                              border: `2px solid ${group.meta.color}`, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center',
+                              boxShadow: `0 2px 8px ${group.meta.glow}`
+                            }}>
+                              <IconComponent size={25} />
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: group.meta.color, letterSpacing: '-0.01em' }}>
+                                  {group.name}
+                                </h3>
+                                <span style={{ 
+                                  fontSize: '0.75rem', 
+                                  fontWeight: 700, 
+                                  color: group.meta.color, 
+                                  backgroundColor: group.meta.bg, 
+                                  border: `1.5px solid ${group.meta.border}`, 
+                                  padding: '0.2rem 0.65rem', 
+                                  borderRadius: '1rem' 
+                                }}>
+                                  {group.portalCount} {group.portalCount === 1 ? 'Portal' : 'Portals'}
+                                </span>
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                                  • {group.methodCount} Action Methods
+                                </span>
+                              </div>
+                              <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                {group.meta.description}
+                              </p>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setSelectedCategory(group.name)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.4rem',
+                              padding: '0.45rem 0.95rem',
+                              backgroundColor: group.meta.color,
+                              color: '#ffffff',
+                              border: 'none',
+                              borderRadius: '0.5rem',
+                              fontSize: '0.825rem',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              boxShadow: `0 3px 10px ${group.meta.glow}`,
+                              transition: 'all 0.18s ease'
+                            }}
+                          >
+                            <span>Sub-List View</span>
+                            <ChevronRight size={15} />
+                          </button>
+                        </div>
+
+                        {/* Separate Category App Boxes Grid */}
+                        {group.sites.length > 0 ? (
+                          <div className="portal-app-box-grid">
+                            {group.sites.map(site => renderPortalAppBox(site, group.meta))}
+                          </div>
+                        ) : (
+                          <div style={{
+                            padding: '2.5rem 1rem',
+                            backgroundColor: '#ffffff',
+                            border: `2px dashed ${group.meta.border}`,
+                            borderRadius: 'var(--radius-lg)',
+                            textAlign: 'center',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                          }}>
+                            <IconComponent size={32} color={group.meta.color} style={{ opacity: 0.5 }} />
+                            <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                              No portals added in {group.name} yet
+                            </p>
+                            <button
+                              type="button"
+                              className="btn btn-primary"
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, category: group.name }));
+                                setIsAddModalOpen(true);
+                              }}
+                              style={{ padding: '0.45rem 0.85rem', fontSize: '0.825rem', marginTop: '0.35rem', backgroundColor: group.meta.color }}
+                            >
+                              <Plus size={14} /> Add First {group.name} Portal
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : viewMode === 'grid' ? (
+              /* ALL PORTALS GRID MODE */
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Grid size={20} color="var(--primary-color)" />
+                      <span>All Portals Unified Grid</span>
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                      Complete directory of all registered portals and direct services.
+                    </p>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary-color)', backgroundColor: 'var(--primary-light)', padding: '0.3rem 0.75rem', borderRadius: '1rem', border: '1px solid var(--primary-border)' }}>
+                    {websites.length} Portals Total
+                  </div>
+                </div>
+
+                <div className="portal-app-box-grid">
+                  {websites.map(site => renderPortalAppBox(site))}
+                </div>
+              </div>
+            ) : (
+              /* CATEGORY CARDS HUB MODE (Ultra Colour & UI Set) */
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div>
+                    <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Folder size={22} color="var(--primary-color)" />
+                      <span>Category Directory Groups</span>
+                    </h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                      Click on any category group below to inspect portals, direct portal methods, fees, and required documents.
+                    </p>
+                  </div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary-color)', backgroundColor: 'var(--primary-light)', padding: '0.3rem 0.85rem', borderRadius: '1rem', border: '1px solid var(--primary-border)' }}>
+                    {categoryGroups.length} Categories Active
+                  </div>
+                </div>
+
+                <div className="category-group-grid">
+                  {categoryGroups.map(group => {
+                    const IconComponent = group.meta.icon || Folder;
+                    return (
+                      <div 
+                        key={group.name} 
+                        className="category-group-card"
+                        onClick={() => setSelectedCategory(group.name)}
+                        style={{
+                          border: `1.5px solid ${group.meta.border}`,
+                          position: 'relative',
+                          overflow: 'hidden'
+                        }}
+                      >
+                        {/* Top 4px Vibrant Accent Gradient Bar */}
+                        <div style={{ height: '4px', background: group.meta.accentGradient, position: 'absolute', top: 0, left: 0, right: 0 }} />
+
+                        {/* Top Row: Icon + Count Badges */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem', marginTop: '0.15rem' }}>
+                          <div 
+                            className="category-icon-wrapper" 
+                            style={{ 
+                              backgroundColor: group.meta.bg, 
+                              color: group.meta.color, 
+                              border: `1.5px solid ${group.meta.border}`,
+                              boxShadow: `0 4px 10px ${group.meta.glow || 'rgba(0,0,0,0.04)'}`
+                            }}
+                          >
+                            <IconComponent size={24} />
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                            <span style={{ 
+                              fontSize: '0.75rem', 
+                              fontWeight: 700, 
+                              color: group.meta.color, 
+                              backgroundColor: group.meta.bg, 
+                              border: `1px solid ${group.meta.border}`,
+                              padding: '0.2rem 0.55rem', 
+                              borderRadius: '1rem' 
+                            }}>
+                              {group.portalCount} {group.portalCount === 1 ? 'Portal' : 'Portals'}
+                            </span>
+                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                              {group.methodCount} Methods
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Category Title */}
+                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.35rem', letterSpacing: '-0.01em' }}>
+                          {group.name}
+                        </h3>
+
+                        {/* Category Description */}
+                        <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '0.95rem', minHeight: '2.5rem' }}>
+                          {group.meta.description}
+                        </p>
+
+                        {/* Included Portals Preview Tags (Ultra Colored Matching Pills) */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1.15rem', minHeight: '1.8rem' }}>
+                          {group.sites.slice(0, 3).map(site => (
+                            <span 
+                              key={site.id} 
+                              style={{ 
+                                fontSize: '0.72rem', 
+                                backgroundColor: group.meta.bg, 
+                                color: group.meta.color, 
+                                border: `1px solid ${group.meta.border}`,
+                                padding: '0.2rem 0.55rem', 
+                                borderRadius: '0.4rem',
+                                fontWeight: 600
+                              }}
+                            >
+                              {site.name}
+                            </span>
+                          ))}
+                          {group.sites.length > 3 && (
+                            <span style={{ fontSize: '0.72rem', color: group.meta.color, fontWeight: 700, padding: '0.2rem 0.35rem' }}>
+                              +{group.sites.length - 3} more
+                            </span>
+                          )}
+                          {group.sites.length === 0 && (
+                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                              No portals added yet
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Card Footer Click Prompt (Rich Action Pill) */}
+                        <div style={{ 
+                          marginTop: 'auto', 
+                          padding: '0.55rem 0.85rem', 
+                          backgroundColor: group.meta.bg, 
+                          border: `1px solid ${group.meta.border}`,
+                          borderRadius: '0.55rem',
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'space-between', 
+                          fontSize: '0.82rem', 
+                          fontWeight: 700, 
+                          color: group.meta.color,
+                          transition: 'all 0.18s ease'
+                        }}>
+                          <span>Explore Sub-List & Methods</span>
+                          <ChevronRight size={16} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             )}
           </div>
         ) : (
-          /* Ultra-clean App Icon Grid View */
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', 
-            gap: '1.25rem' 
-          }}>
-            {filteredWebsites.map(site => (
-              <div 
-                key={site.id} 
-                className="card website-app-tile"
-                onClick={() => setSelectedDetailsWebsite(site)}
-                style={{ 
-                  display: 'flex', 
-                  flexDirection: 'column', 
-                  alignItems: 'center', 
-                  textAlign: 'center',
-                  padding: '1.35rem 0.85rem',
-                  borderRadius: '1rem',
-                  border: '1px solid var(--border-color)',
-                  cursor: 'pointer',
-                  backgroundColor: 'var(--card-bg)',
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  position: 'relative'
-                }}
-              >
-                {/* App Icon Tile */}
-                <div style={{ 
-                  width: '64px', 
-                  height: '64px', 
-                  borderRadius: '1.1rem', 
-                  backgroundColor: 'rgba(79, 70, 229, 0.08)', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justify: 'center',
-                  color: 'var(--primary-color)',
-                  marginBottom: '0.75rem',
-                  boxShadow: '0 4px 10px rgba(79, 70, 229, 0.12)'
-                }}>
-                  <Globe size={32} />
+          /* SUB LIST VIEW WITH METHODS (When Category is clicked / selected) */
+          <div>
+            {(() => {
+              const currentMeta = getCategoryMeta(selectedCategory);
+              const CurrentIcon = currentMeta.icon || Folder;
+              const sitesInCategory = websites.filter(site => site.category === selectedCategory);
+              const totalMethodsInCategory = sitesInCategory.reduce((acc, site) => acc + (Array.isArray(site.urls) ? site.urls.length : 0), 0);
+
+              return (
+                <div>
+                  {/* Category Navigation Breadcrumb Bar with Back Button */}
+                  <div className="category-breadcrumb-bar" style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '1.1rem 1.35rem',
+                    backgroundColor: '#ffffff',
+                    border: `1.5px solid ${currentMeta.border}`,
+                    borderRadius: 'var(--radius-xl)',
+                    boxShadow: `0 4px 16px ${currentMeta.glow || 'rgba(0,0,0,0.04)'}`,
+                    marginBottom: '1.5rem',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    flexWrap: 'wrap',
+                    gap: '0.85rem'
+                  }}>
+                    {/* Top 4px Color Bar */}
+                    <div style={{ height: '4px', background: currentMeta.accentGradient, position: 'absolute', top: 0, left: 0, right: 0 }} />
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
+                      <button 
+                        type="button"
+                        className="btn btn-secondary" 
+                        onClick={() => setSelectedCategory('All')}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.5rem 0.95rem', fontSize: '0.85rem', fontWeight: 700 }}
+                        title="Back to All Categories Directory"
+                      >
+                        <ArrowLeft size={16} /> Back to All Categories
+                      </button>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                        <div style={{ width: '40px', height: '40px', borderRadius: '0.65rem', backgroundColor: currentMeta.bg, color: currentMeta.color, border: `1.5px solid ${currentMeta.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <CurrentIcon size={22} />
+                        </div>
+                        <div>
+                          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
+                            {selectedCategory}
+                          </h2>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            {currentMeta.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: currentMeta.color, backgroundColor: currentMeta.bg, border: `1px solid ${currentMeta.border}`, padding: '0.25rem 0.65rem', borderRadius: '1rem' }}>
+                        {sitesInCategory.length} {sitesInCategory.length === 1 ? 'Portal' : 'Portals'}
+                      </span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', backgroundColor: '#f1f5f9', padding: '0.25rem 0.65rem', borderRadius: '1rem' }}>
+                        {totalMethodsInCategory} Action Methods
+                      </span>
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={() => {
+                          setFormData(prev => ({ ...prev, category: selectedCategory }));
+                          setIsAddModalOpen(true);
+                        }}
+                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.825rem', fontWeight: 600 }}
+                      >
+                        <Plus size={15} /> Add Portal
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Sub-List Cards */}
+                  {sitesInCategory.length === 0 ? (
+                    <div className="card" style={{ textAlign: 'center', padding: '3.5rem 1rem', color: 'var(--text-muted)' }}>
+                      <CurrentIcon size={44} style={{ color: currentMeta.color, opacity: 0.4, marginBottom: '0.75rem' }} />
+                      <h3 style={{ fontWeight: 600, color: 'var(--text-main)', marginBottom: '0.5rem' }}>
+                        No web portals in "{selectedCategory}" yet
+                      </h3>
+                      <p style={{ fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+                        Add services to this category using the button below.
+                      </p>
+                      <button type="button" className="btn btn-primary" onClick={handleOpenAddModal}>
+                        <Plus size={16} /> Add Portal to {selectedCategory}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="portal-app-box-grid">
+                      {sitesInCategory.map(site => renderPortalAppBox(site, currentMeta))}
+                    </div>
+                  )}
                 </div>
-
-                {/* App Name */}
-                <h3 style={{ 
-                  fontSize: '0.95rem', 
-                  fontWeight: 700, 
-                  color: 'var(--text-main)', 
-                  lineHeight: 1.3, 
-                  marginBottom: '0.35rem',
-                  wordBreak: 'break-word'
-                }}>
-                  {site.name}
-                </h3>
-
-                {/* Category Pill */}
-                <span style={{
-                  fontSize: '0.68rem',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.02em',
-                  color: 'var(--primary-color)',
-                  backgroundColor: 'rgba(79, 70, 229, 0.08)',
-                  padding: '0.15rem 0.5rem',
-                  borderRadius: '1rem'
-                }}>
-                  {site.category || 'General'}
-                </span>
-              </div>
-            ))}
+              );
+            })()}
           </div>
         )}
       </main>
@@ -490,6 +1298,15 @@ export default function WebsitesPage() {
           onClose={() => setSelectedDetailsWebsite(null)}
           onEdit={(site) => handleOpenEditModal(site)}
           onDelete={(site) => setDeletingWebsite(site)}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Share Document Requirements Modal */}
+      {sharingWebsite && (
+        <ShareDocumentsModal 
+          website={sharingWebsite}
+          onClose={() => setSharingWebsite(null)}
           showToast={showToast}
         />
       )}
@@ -585,101 +1402,277 @@ export default function WebsitesPage() {
                 )}
               </div>
 
-              {/* Description */}
+              {/* Description & Formatted UI Editor */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Description / Purpose</label>
-                <textarea 
-                  className="form-input" 
-                  rows={2} 
-                  placeholder="Briefly describe what services this web portal provides..."
-                  value={formData.description}
-                  onChange={e => setFormData({ ...formData, description: e.target.value })}
-                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <label className="form-label" style={{ marginBottom: 0 }}>Description / Content UI</label>
+                  <button
+                    type="button"
+                    onClick={() => setIsPreviewingDescription(!isPreviewingDescription)}
+                    style={{ 
+                      background: isPreviewingDescription ? 'rgba(79, 70, 229, 0.1)' : 'transparent', 
+                      border: '1px solid var(--border-color)', 
+                      borderRadius: '0.35rem', 
+                      padding: '0.2rem 0.55rem', 
+                      fontSize: '0.75rem', 
+                      fontWeight: 600, 
+                      color: isPreviewingDescription ? 'var(--primary-color)' : 'var(--text-muted)', 
+                      cursor: 'pointer' 
+                    }}
+                  >
+                    {isPreviewingDescription ? '✏️ Edit Raw Text' : '👁️ View Rendered UI'}
+                  </button>
+                </div>
+
+                {/* Quick Insert Templates */}
+                {!isPreviewingDescription && (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.45rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center' }}>
+                      Insert:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertDescriptionTemplate('H1: Main Title\n')}
+                      style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem', borderRadius: '0.25rem', border: '1px solid var(--border-color)', backgroundColor: '#f8fafc', cursor: 'pointer' }}
+                    >
+                      + H1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertDescriptionTemplate('H2: Sub-Heading\n')}
+                      style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem', borderRadius: '0.25rem', border: '1px solid var(--border-color)', backgroundColor: '#f8fafc', cursor: 'pointer' }}
+                    >
+                      + H2
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertDescriptionTemplate('H3: Paragraph Header\n')}
+                      style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem', borderRadius: '0.25rem', border: '1px solid var(--border-color)', backgroundColor: '#f8fafc', cursor: 'pointer' }}
+                    >
+                      + H3
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertDescriptionTemplate('---\n')}
+                      style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem', borderRadius: '0.25rem', border: '1px solid var(--border-color)', backgroundColor: '#f8fafc', cursor: 'pointer' }}
+                    >
+                      + Divider (---)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertDescriptionTemplate('table:\nOrganization$TNPSC\nPost Name$Combined Technical Services\nLink$*LINK(Link)->https://apply.tnpscexams.in/\n')}
+                      style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem', borderRadius: '0.25rem', border: '1px solid rgba(16, 185, 129, 0.4)', backgroundColor: '#ecfdf5', cursor: 'pointer', fontWeight: 600, color: '#047857' }}
+                    >
+                      + Green Table ($)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertDescriptionTemplate('*LINK(Link)->https://apply.tnpscexams.in/\n')}
+                      style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem', borderRadius: '0.25rem', border: '1px solid rgba(16, 185, 129, 0.4)', backgroundColor: '#ecfdf5', cursor: 'pointer', fontWeight: 600, color: '#047857' }}
+                    >
+                      + *LINK Shortcut
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleInsertDescriptionTemplate('H1: Main Title\nH2: Sub-Heading\nH3: Paragraph Header\n---\ntable:\nOrganization$TNPSC\nPost Name$Combined Technical Services\nLink$*LINK(Link)->https://apply.tnpscexams.in/\n')}
+                      style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: '0.25rem', border: '1px solid var(--primary-color)', backgroundColor: 'rgba(79, 70, 229, 0.08)', cursor: 'pointer', fontWeight: 600, color: 'var(--primary-color)', marginLeft: 'auto' }}
+                    >
+                      📋 Paste Sample
+                    </button>
+                  </div>
+                )}
+
+                {!isPreviewingDescription ? (
+                  <textarea 
+                    className="form-input" 
+                    rows={5} 
+                    placeholder="H1: Main Title&#10;H2: Sub-Heading&#10;H3: Paragraph Header&#10;---&#10;table:&#10;Organization$TNPSC&#10;Post Name$Combined Technical Services&#10;Link$*LINK(Link)->https://apply.tnpscexams.in/"
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}
+                  />
+                ) : (
+                  <div style={{ padding: '1rem', backgroundColor: '#f8fafc', borderRadius: '0.5rem', border: '1px solid var(--border-color)', minHeight: '110px' }}>
+                    {formData.description ? (
+                      <FormattedContent content={formData.description} />
+                    ) : (
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', margin: 0 }}>
+                        No description content entered yet. Switch back to Edit to paste or type content.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Formatting Guide Box */}
+                <div className="formatting-guide-card">
+                  <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-main)', marginBottom: '0.35rem' }}>
+                    💡 Formatting Guide:
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: '1.2rem', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                    <li><strong>H1: Title | H2: Heading | H3: Sub-Heading</strong></li>
+                    <li><strong>---</strong> (3 hyphens for horizontal divider line)</li>
+                    <li><strong>table:</strong> followed by lines separated by <strong>$</strong> (or <strong>,</strong> ) for green tables</li>
+                    <li><strong>*LINK(label)-&gt;http...</strong> (Custom shortcut button for URLs e.g. <code>*LINK(Link)-&gt;https://...</code>)</li>
+                    <li>Direct URLs starting with <strong>https://</strong> automatically convert into clickable links!</li>
+                  </ul>
+                </div>
               </div>
 
               {/* Document Requirements Tags Input */}
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Document Requirements</label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.45rem' }}>
+                  <label className="form-label" style={{ marginBottom: 0, fontWeight: 700 }}>
+                    Document Requirements ({formData.documentRequirements.length})
+                  </label>
+                  {formData.documentRequirements.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, documentRequirements: [] }))}
+                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', padding: 0 }}
+                    >
+                      Clear All
+                    </button>
+                  )}
+                </div>
                 
-                {/* Selected Document Tags */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.5rem' }}>
-                  {formData.documentRequirements.map((doc, idx) => (
-                    <span 
-                      key={idx} 
+                {/* Selected Document Tags - Displayed one by one with numbered badges */}
+                {formData.documentRequirements.length > 0 ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem', marginBottom: '0.75rem', padding: '0.65rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.6rem' }}>
+                    {formData.documentRequirements.map((doc, idx) => (
+                      <span 
+                        key={idx} 
+                        style={{ 
+                          backgroundColor: '#ffffff', 
+                          color: 'var(--text-main)', 
+                          border: '1.5px solid #cbd5e1', 
+                          padding: '0.3rem 0.6rem', 
+                          borderRadius: '0.45rem', 
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+                        }}
+                      >
+                        <span style={{ 
+                          fontSize: '0.7rem', 
+                          fontWeight: 700, 
+                          backgroundColor: 'rgba(79, 70, 229, 0.12)', 
+                          color: 'var(--primary-color)',
+                          borderRadius: '50%',
+                          width: '18px',
+                          height: '18px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>
+                          {idx + 1}
+                        </span>
+                        <span>{doc}</span>
+                        <button 
+                          type="button" 
+                          onClick={() => handleRemoveDocTag(doc)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '0 0.1rem', display: 'flex', alignItems: 'center' }}
+                          title="Remove document"
+                          onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                          onMouseLeave={e => e.currentTarget.style.color = '#94a3b8'}
+                        >
+                          <X size={14} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontStyle: 'italic', marginBottom: '0.5rem' }}>
+                    No documents added yet. Type below or pick suggestions.
+                  </div>
+                )}
+
+                {/* Custom Doc Input - Supports typing a b c on separate lines, pasting numbered lists, etc. */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                  <div style={{ position: 'relative' }}>
+                    <textarea 
+                      className="form-input" 
+                      rows={2}
+                      placeholder="Type or paste documents (e.g. type 'a' [Enter] 'b' [Enter] 'c', or numbered list '1. Photo 2. Aadhar Card')..."
+                      value={formData.customDocInput}
+                      onChange={e => setFormData({ ...formData, customDocInput: e.target.value })}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+                          e.preventDefault();
+                          handleAddDocTag(formData.customDocInput);
+                        }
+                      }}
                       style={{ 
-                        backgroundColor: 'rgba(79, 70, 229, 0.1)', 
-                        color: 'var(--primary-color)', 
-                        padding: '0.2rem 0.5rem', 
-                        borderRadius: '0.25rem', 
+                        resize: 'vertical', 
+                        minHeight: '64px', 
+                        lineHeight: 1.45, 
+                        fontSize: '0.85rem',
+                        paddingRight: '80px'
+                      }}
+                    />
+                    <button 
+                      type="button" 
+                      className="btn btn-primary" 
+                      onClick={() => handleAddDocTag(formData.customDocInput)}
+                      disabled={!formData.customDocInput.trim()}
+                      style={{ 
+                        position: 'absolute', 
+                        right: '8px', 
+                        bottom: '8px',
+                        padding: '0.35rem 0.75rem',
                         fontSize: '0.8rem',
-                        fontWeight: 500,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.35rem'
+                        fontWeight: 700
                       }}
                     >
-                      {doc}
-                      <button 
-                        type="button" 
-                        onClick={() => handleRemoveDocTag(doc)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--primary-color)', padding: 0 }}
-                      >
-                        <X size={13} />
-                      </button>
+                      + Add
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      💡 Tip: Each line or numbered item (a, b, c) automatically splits into a separate document item!
                     </span>
-                  ))}
-                </div>
-
-                {/* Custom Doc Input */}
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="Type a required document and press Add..."
-                    value={formData.customDocInput}
-                    onChange={e => setFormData({ ...formData, customDocInput: e.target.value })}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddDocTag(formData.customDocInput);
-                      }
-                    }}
-                  />
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary" 
-                    onClick={() => handleAddDocTag(formData.customDocInput)}
-                    style={{ flexShrink: 0 }}
-                  >
-                    Add
-                  </button>
+                    {formData.customDocInput.trim() && (
+                      <span style={{ fontSize: '0.72rem', color: 'var(--primary-color)', fontWeight: 600 }}>
+                        Press "+ Add" or Ctrl+Enter to split
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Suggested Quick Add Badges */}
-                <div style={{ marginTop: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem' }}>
+                <div style={{ marginTop: '0.65rem' }}>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.25rem', fontWeight: 600 }}>
                     Quick suggestions (click to add):
                   </span>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem' }}>
-                    {SUGGESTED_DOCUMENTS.map(sDoc => (
-                      <button
-                        key={sDoc}
-                        type="button"
-                        onClick={() => handleAddDocTag(sDoc)}
-                        disabled={formData.documentRequirements.includes(sDoc)}
-                        style={{
-                          fontSize: '0.725rem',
-                          padding: '0.15rem 0.45rem',
-                          borderRadius: '0.25rem',
-                          border: '1px solid var(--border-color)',
-                          backgroundColor: formData.documentRequirements.includes(sDoc) ? '#e2e8f0' : '#f8fafc',
-                          color: formData.documentRequirements.includes(sDoc) ? '#94a3b8' : 'var(--text-main)',
-                          cursor: formData.documentRequirements.includes(sDoc) ? 'default' : 'pointer'
-                        }}
-                      >
-                        + {sDoc}
-                      </button>
-                    ))}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                    {SUGGESTED_DOCUMENTS.map(sDoc => {
+                      const isSelected = formData.documentRequirements.includes(sDoc);
+                      return (
+                        <button
+                          key={sDoc}
+                          type="button"
+                          onClick={() => handleAddDocTag(sDoc)}
+                          disabled={isSelected}
+                          style={{
+                            fontSize: '0.725rem',
+                            padding: '0.2rem 0.5rem',
+                            borderRadius: '0.35rem',
+                            border: isSelected ? '1px solid #e2e8f0' : '1px solid #cbd5e1',
+                            backgroundColor: isSelected ? '#f1f5f9' : '#ffffff',
+                            color: isSelected ? '#94a3b8' : 'var(--text-main)',
+                            fontWeight: isSelected ? 500 : 600,
+                            cursor: isSelected ? 'default' : 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.25rem'
+                          }}
+                        >
+                          {isSelected ? '✓' : '+'} {sDoc}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -728,7 +1721,7 @@ export default function WebsitesPage() {
                       <input 
                         type="text" 
                         className="form-input" 
-                        placeholder="Link Label (e.g. Apply Online)"
+                        placeholder="Link Label (e.g. Link)"
                         value={urlObj.label}
                         onChange={e => handleUrlChange(idx, 'label', e.target.value)}
                         style={{ width: '35%' }}

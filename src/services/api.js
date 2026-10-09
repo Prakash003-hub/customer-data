@@ -1,3 +1,5 @@
+import { parseDocumentList } from '../utils/documentUtils';
+
 // Add your Google Apps Script Web App URL here
 const API_URL = import.meta.env.VITE_API_URL || "https://script.google.com/macros/s/AKfycbzKYBBk8NBh3jlLV1FlzOTlm2iNY5CxIxuEA-EwC7RRoWw_G5DSXxMIjY61N7fyS111CQ/exec";
 
@@ -7,7 +9,7 @@ const DEFAULT_WEBSITES = [
     id: "web-1",
     name: "UIDAI - MyAadhaar Portal",
     category: "Identity & Governance",
-    description: "Official Unique Identification Authority of India portal for downloading Aadhaar, checking update status, address update, PVC card order, and biometric lock.",
+    description: "H1: UIDAI - MyAadhaar Portal\nH2: Citizen Identification Services\nH3: Official Overview\nOfficial Unique Identification Authority of India (UIDAI) portal for Aadhaar download, PVC order, and demographic updates.\n---\ntable:\nService$Fee\nAadhaar PVC Card$₹50 (Delivered via Speed Post)\nAddress Update$₹50 (Online proof verification)\nBiometric Lock/Unlock$Free (Instant online)\nOfficial Portal$*LINK(Link)->https://myaadhaar.uidai.gov.in/",
     documentRequirements: ["Aadhaar Number", "Registered Mobile No (for OTP)", "Proof of Address (for update)"],
     urls: [
       { label: "MyAadhaar Portal", url: "https://myaadhaar.uidai.gov.in/" },
@@ -108,7 +110,7 @@ const DEFAULT_WEBSITES = [
   }
 ];
 
-const LOCAL_STORAGE_WEBSITES_KEY = "customer_app_websites_v1";
+const LOCAL_STORAGE_WEBSITES_KEY = "customer_app_websites_v2";
 const LOCAL_STORAGE_CATEGORIES_KEY = "customer_app_categories_v1";
 
 const DEFAULT_CATEGORIES = [
@@ -151,7 +153,13 @@ const getLocalWebsites = () => {
   try {
     const data = localStorage.getItem(LOCAL_STORAGE_WEBSITES_KEY);
     if (data) {
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) {
+        return parsed.map(site => ({
+          ...site,
+          documentRequirements: parseDocumentList(site.documentRequirements)
+        }));
+      }
     }
   } catch (err) {
     console.error("Error reading local websites storage:", err);
@@ -162,7 +170,10 @@ const getLocalWebsites = () => {
   } catch (e) {
     console.error("Error writing default websites to storage:", e);
   }
-  return DEFAULT_WEBSITES;
+  return DEFAULT_WEBSITES.map(site => ({
+    ...site,
+    documentRequirements: parseDocumentList(site.documentRequirements)
+  }));
 };
 
 const saveLocalWebsites = (websites) => {
@@ -366,8 +377,12 @@ export const api = {
       if (response.ok) {
         const data = await response.json();
         if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
-          saveLocalWebsites(data.data);
-          return data;
+          const normalized = data.data.map(site => ({
+            ...site,
+            documentRequirements: parseDocumentList(site.documentRequirements)
+          }));
+          saveLocalWebsites(normalized);
+          return { success: true, data: normalized };
         }
       }
     } catch (error) {
@@ -383,9 +398,7 @@ export const api = {
       name: websiteData.name || 'Untitled Website',
       category: websiteData.category || 'General',
       description: websiteData.description || '',
-      documentRequirements: Array.isArray(websiteData.documentRequirements)
-        ? websiteData.documentRequirements
-        : (websiteData.documentRequirements || '').split(',').map(s => s.trim()).filter(Boolean),
+      documentRequirements: parseDocumentList(websiteData.documentRequirements),
       urls: Array.isArray(websiteData.urls) ? websiteData.urls : [],
       payFee: websiteData.payFee || 'N/A',
       charges: websiteData.charges || 'N/A',
@@ -428,11 +441,8 @@ export const api = {
       updatedAt: new Date().toISOString()
     };
 
-    if (typeof websiteData.documentRequirements === 'string') {
-      updatedWebsite.documentRequirements = websiteData.documentRequirements
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
+    if (websiteData.documentRequirements !== undefined) {
+      updatedWebsite.documentRequirements = parseDocumentList(websiteData.documentRequirements);
     }
 
     list[index] = updatedWebsite;

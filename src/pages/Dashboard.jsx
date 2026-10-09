@@ -191,28 +191,23 @@ export default function Dashboard() {
               </table>
             </div>
 
-            {/* Mobile Card View */}
-            <div className="hidden-desktop">
+            {/* Mobile Card View (Hides Aadhaar No & Phone No on mobile as requested) */}
+            <div className="hidden-desktop customer-mobile-list">
               {filteredCustomers.map(customer => (
                 <div 
                   key={customer.CustomerID} 
                   className="mobile-card"
-                  style={{ cursor: 'pointer' }}
                   onClick={() => setSelectedCustomer(customer)}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+                  <div className="mobile-card-header">
                     <div>
-                      <h3 style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--primary-color)' }}>{customer.Name}</h3>
+                      <h3 className="mobile-card-name">{customer.Name}</h3>
                       {customer.Village && (
-                        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <p className="mobile-card-village">
                           <MapPin size={13} /> {customer.Village}
                         </p>
                       )}
                     </div>
-                    <span style={{ fontSize: '0.75rem', fontFamily: 'monospace', backgroundColor: 'var(--bg-color)', padding: '0.25rem 0.5rem', borderRadius: '0.25rem', color: 'var(--text-muted)' }}>
-                      <CreditCard size={12} style={{ display: 'inline', marginRight: '3px' }} />
-                      {maskAadhaar(customer.AadhaarNo)}
-                    </span>
                   </div>
 
                   <div className="mobile-card-actions" onClick={e => e.stopPropagation()}>
@@ -221,23 +216,22 @@ export default function Dashboard() {
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="btn btn-whatsapp"
-                      style={{ opacity: !customer.PhoneNo ? 0.5 : 1, pointerEvents: !customer.PhoneNo ? 'none' : 'auto' }}
+                      style={{ opacity: !customer.PhoneNo ? 0.45 : 1, pointerEvents: !customer.PhoneNo ? 'none' : 'auto' }}
                     >
-                      <MessageCircle size={16} /> WhatsApp
+                      <MessageCircle size={15} /> WhatsApp
                     </a>
                     <a 
                       href={customer.PhoneNo ? `tel:${customer.PhoneNo}` : '#'} 
                       className="btn btn-secondary"
-                      style={{ opacity: !customer.PhoneNo ? 0.5 : 1, pointerEvents: !customer.PhoneNo ? 'none' : 'auto' }}
+                      style={{ opacity: !customer.PhoneNo ? 0.45 : 1, pointerEvents: !customer.PhoneNo ? 'none' : 'auto' }}
                     >
-                      <Phone size={16} /> Call
+                      <Phone size={15} /> Call
                     </a>
                     <button 
                       className="btn btn-primary" 
-                      style={{ padding: '0.5rem 0.85rem', fontSize: '0.85rem' }}
                       onClick={() => setSelectedCustomer(customer)}
                     >
-                      <Eye size={16} /> Details
+                      <Eye size={15} /> Details
                     </button>
                   </div>
                 </div>
