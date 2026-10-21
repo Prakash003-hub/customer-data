@@ -927,32 +927,42 @@ textarea.form-input {
    Websites Directory Specific Components (Ultra UX)
    ========================================================= */
 
-/* Category Grid & Cards */
-.category-group-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.25rem;
-}
-
-.category-icon-wrapper {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-lg);
+/* Chrome Launcher / Shortcut Icons Look */
+.chrome-shortcuts-grid {
   display: flex;
-  align-items: center;
+  flex-wrap: wrap;
   justify-content: center;
-  flex-shrink: 0;
-  transition: transform 0.2s ease;
+  align-items: flex-start;
+  gap: 1.75rem 1.35rem;
 }
 
-.category-group-card:hover .category-icon-wrapper {
-  transform: scale(1.06);
+.chrome-shortcut-item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 96px;
+  padding: 0.5rem 0.25rem;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  outline: none;
 }
 
-/* Breadcrumb Navigation Bar */
+.chrome-shortcut-item:hover .chrome-shortcut-circle {
+  transform: translateY(-4px) scale(1.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.chrome-shortcut-item:hover .chrome-shortcut-label {
+  color: var(--primary-color);
+}
+
+/* Breadcrumb Navigation Bar & Back Button */
 .category-breadcrumb-bar {
   display: flex;
-  justify-content: space-between;
+  justifyContent: space-between;
   align-items: center;
   padding: 0.85rem 1.15rem;
   background-color: #ffffff;
@@ -962,6 +972,24 @@ textarea.form-input {
   box-shadow: var(--shadow-xs);
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+.back-btn-responsive {
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.back-btn-responsive:hover {
+  background-color: var(--primary-light) !important;
+  color: var(--primary-color) !important;
+  border-color: var(--primary-border) !important;
+  transform: translateX(-2px);
+}
+
+.back-btn-responsive:active {
+  transform: scale(0.95) !important;
+  background-color: var(--border-subtle) !important;
 }
 
 /* Portal App Box Grid */

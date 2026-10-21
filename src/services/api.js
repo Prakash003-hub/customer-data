@@ -119,8 +119,7 @@ const DEFAULT_CATEGORIES = [
   "Transport & Vehicles",
   "Travel & Identity",
   "Government Schemes",
-  "Utilities & Bills",
-  "Other"
+  "Utilities & Bills"
 ];
 
 const getLocalCategories = () => {
@@ -128,7 +127,10 @@ const getLocalCategories = () => {
     const data = localStorage.getItem(LOCAL_STORAGE_CATEGORIES_KEY);
     if (data) {
       const parsed = JSON.parse(data);
-      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        const filtered = parsed.filter(c => c && c.trim().toLowerCase() !== 'other');
+        return filtered.length > 0 ? filtered : DEFAULT_CATEGORIES;
+      }
     }
   } catch (err) {
     console.error("Error reading local categories storage:", err);
@@ -493,7 +495,8 @@ export const api = {
         const data = await response.json();
         if (data && data.success && Array.isArray(data.data) && data.data.length > 0) {
           const localList = getLocalCategories();
-          const merged = Array.from(new Set([...localList, ...data.data]));
+          const cleanRemote = data.data.filter(c => c && String(c).trim().toLowerCase() !== 'other');
+          const merged = Array.from(new Set([...localList, ...cleanRemote]));
           saveLocalCategories(merged);
           return { success: true, data: merged };
         }

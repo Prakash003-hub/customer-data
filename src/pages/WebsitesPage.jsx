@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Loader from '../components/Loader';
 import WebsiteDetailsModal from '../components/WebsiteDetailsModal';
@@ -99,16 +100,6 @@ const CATEGORY_META = {
     gradient: 'linear-gradient(180deg, rgba(234, 88, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
     glow: 'rgba(234, 88, 12, 0.16)',
     description: 'Electricity, Water, LPG Gas, Fastag & Bill Payments'
-  },
-  'Other': {
-    icon: Layers,
-    color: '#475569',
-    bg: '#f8fafc',
-    border: '#cbd5e1',
-    accentGradient: 'linear-gradient(90deg, #475569 0%, #64748b 100%)',
-    gradient: 'linear-gradient(180deg, rgba(71, 85, 105, 0.04) 0%, rgba(255, 255, 255, 0) 100%)',
-    glow: 'rgba(71, 85, 105, 0.14)',
-    description: 'General Portals, Forms, Educational & Miscellaneous Services'
   }
 };
 
@@ -147,14 +138,11 @@ export default function WebsitesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  
-  // View mode & copy state (default to separate view UI)
-  const [viewMode, setViewMode] = useState('separate'); // 'groups' | 'separate' | 'grid'
-  const [copiedUrl, setCopiedUrl] = useState(null);
-  const [expandedAccordionCats, setExpandedAccordionCats] = useState({});
+  // Router history sync for mobile swipe/back button and PC browser back button
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
 
-  // Modal states
+  // Modal states (Declared first so effects can safely reference them)
   const [selectedDetailsWebsite, setSelectedDetailsWebsite] = useState(null);
   const [sharingWebsite, setSharingWebsite] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -164,9 +152,55 @@ export default function WebsitesPage() {
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
   const [isPreviewingDescription, setIsPreviewingDescription] = useState(false);
 
+  // View mode & copy state (Category Directory Groups view by default)
+  const [viewMode, setViewMode] = useState('groups'); // 'groups' | 'separate' | 'grid'
+  const [copiedUrl, setCopiedUrl] = useState(null);
+  const [expandedAccordionCats, setExpandedAccordionCats] = useState({});
+
   // Inline New Category creation state inside Add/Edit form
   const [isAddingNewCategoryInline, setIsAddingNewCategoryInline] = useState(false);
   const [inlineCategoryInput, setInlineCategoryInput] = useState('');
+
+  const selectedCategory = searchParams.get('category') || 'All';
+
+  const setSelectedCategory = (catName) => {
+    if (!catName || catName === 'All') {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete('category');
+      setSearchParams(nextParams);
+    } else {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.set('category', catName);
+      setSearchParams(nextParams);
+    }
+  };
+
+  const handleBackToCategories = () => {
+    if (window.history.length > 1 && searchParams.get('category')) {
+      navigate(-1);
+    } else {
+      setSelectedCategory('All');
+    }
+  };
+
+  // Keyboard shortcut: PC Escape key and Alt + Left Arrow to go back
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (
+        (e.key === 'Escape' || (e.altKey && e.key === 'ArrowLeft')) &&
+        selectedCategory !== 'All' &&
+        !selectedDetailsWebsite &&
+        !isAddModalOpen &&
+        !isManageCategoriesOpen &&
+        !sharingWebsite
+      ) {
+        e.preventDefault();
+        handleBackToCategories();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedCategory, selectedDetailsWebsite, isAddModalOpen, isManageCategoriesOpen, sharingWebsite]);
 
   // Form State for Add / Edit
   const [formData, setFormData] = useState({
@@ -201,7 +235,8 @@ export default function WebsitesPage() {
       }
 
       if (catRes.success && Array.isArray(catRes.data)) {
-        setCategories(catRes.data);
+        const cleanCats = catRes.data.filter(c => c && String(c).trim().toLowerCase() !== 'other');
+        setCategories(cleanCats);
       }
     } catch (err) {
       setError(err.message || 'Error fetching website directory');
@@ -236,24 +271,26 @@ export default function WebsitesPage() {
     setTimeout(() => setCopiedUrl(null), 2000);
   };
 
-  // Available categories list for filter tabs (includes 'All')
+  // Available categories list (excluding 'Other')
   const allCategoryTabs = useMemo(() => {
-    return ['All', ...categories];
+    return ['All', ...categories.filter(c => c && String(c).trim().toLowerCase() !== 'other')];
   }, [categories]);
 
-  // Group portals by category for Category Group UI
+  // Group portals by category for Category Group UI (excluding 'Other')
   const categoryGroups = useMemo(() => {
-    return categories.map(cat => {
-      const sites = websites.filter(site => site.category === cat);
-      const totalMethods = sites.reduce((acc, site) => acc + (Array.isArray(site.urls) ? site.urls.length : 0), 0);
-      return {
-        name: cat,
-        sites,
-        portalCount: sites.length,
-        methodCount: totalMethods,
-        meta: getCategoryMeta(cat)
-      };
-    });
+    return categories
+      .filter(cat => cat && String(cat).trim().toLowerCase() !== 'other')
+      .map(cat => {
+        const sites = websites.filter(site => site.category === cat);
+        const totalMethods = sites.reduce((acc, site) => acc + (Array.isArray(site.urls) ? site.urls.length : 0), 0);
+        return {
+          name: cat,
+          sites,
+          portalCount: sites.length,
+          methodCount: totalMethods,
+          meta: getCategoryMeta(cat)
+        };
+      });
   }, [categories, websites]);
 
   // Filter websites based on search query and category
@@ -656,169 +693,57 @@ export default function WebsitesPage() {
         {/* Top Header & Search Content (Hidden when a category is selected) */}
         {selectedCategory === 'All' && (
           <>
-            {/* Header Section */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <Globe size={28} color="var(--primary-color)" />
-              <h1 style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-main)' }}>Websites Directory</h1>
-            </div>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginTop: '0.25rem' }}>
-              Tap any category group to view sub-services, action methods, required documents, and direct links.
-            </p>
-          </div>
+            {/* Optimized Top Action & Search Bar */}
+            <div className="card" style={{ marginBottom: '1.25rem', padding: '1rem 1.25rem', borderRadius: '1rem', boxShadow: '0 2px 10px rgba(0,0,0,0.03)' }}>
+              <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between' }}>
+                {/* Search Box */}
+                <div className="search-box" style={{ flex: '1 1 280px' }}>
+                  <Search className="search-icon" size={18} />
+                  <input 
+                    type="text" 
+                    className="search-input" 
+                    placeholder="Search portals, methods, documents, or fees..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                    >
+                      <X size={16} />
+                    </button>
+                  )}
+                </div>
 
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            <button 
-              className="btn btn-secondary" 
-              onClick={() => setIsManageCategoriesOpen(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1rem', fontWeight: 600 }}
-              title="Admin Manage Categories"
-            >
-              <Tag size={16} color="var(--primary-color)" /> Manage Categories
-            </button>
+                {/* Actions: Manage & Add Portal */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                  <button 
+                    type="button"
+                    className="btn btn-secondary" 
+                    onClick={() => setIsManageCategoriesOpen(true)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 0.9rem', fontSize: '0.85rem', fontWeight: 600, borderRadius: '0.55rem' }}
+                    title="Manage Categories"
+                  >
+                    <Tag size={15} color="var(--primary-color)" /> Manage Categories
+                  </button>
 
-            <button 
-              className="btn btn-primary" 
-              onClick={handleOpenAddModal}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.6rem 1.1rem', fontWeight: 600 }}
-            >
-              <Plus size={18} /> Add Web Portal
-            </button>
-          </div>
-        </div>
-
-        {/* Search, View Switcher & Category Tabs Bar */}
-        <div className="card" style={{ marginBottom: '1.5rem', padding: '1.25rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
-            <div className="search-box" style={{ flex: '1 1 280px' }}>
-              <Search className="search-icon" size={18} />
-              <input 
-                type="text" 
-                className="search-input" 
-                placeholder="Search portals, methods, documents, or fees..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
-                >
-                  <X size={16} />
-                </button>
-              )}
-            </div>
-
-            {/* View Mode Switcher */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <div style={{ display: 'inline-flex', backgroundColor: '#f1f5f9', padding: '0.25rem', borderRadius: '0.6rem', gap: '0.2rem' }}>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('groups')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '0.45rem',
-                    fontSize: '0.8rem',
-                    fontWeight: viewMode === 'groups' ? 700 : 500,
-                    backgroundColor: viewMode === 'groups' ? '#ffffff' : 'transparent',
-                    color: viewMode === 'groups' ? 'var(--primary-color)' : 'var(--text-muted)',
-                    border: 'none',
-                    boxShadow: viewMode === 'groups' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                  title="Ultra Color Category Cards"
-                >
-                  <Folder size={14} />
-                  <span>Category Cards</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setViewMode('separate')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '0.45rem',
-                    fontSize: '0.8rem',
-                    fontWeight: viewMode === 'separate' ? 700 : 500,
-                    backgroundColor: viewMode === 'separate' ? '#ffffff' : 'transparent',
-                    color: viewMode === 'separate' ? 'var(--primary-color)' : 'var(--text-muted)',
-                    border: 'none',
-                    boxShadow: viewMode === 'separate' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                  title="Separate Category View Mode"
-                >
-                  <Layers size={14} />
-                  <span>Separate Sections</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setViewMode('grid')}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '0.35rem',
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '0.45rem',
-                    fontSize: '0.8rem',
-                    fontWeight: viewMode === 'grid' ? 700 : 500,
-                    backgroundColor: viewMode === 'grid' ? '#ffffff' : 'transparent',
-                    color: viewMode === 'grid' ? 'var(--primary-color)' : 'var(--text-muted)',
-                    border: 'none',
-                    boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
-                    cursor: 'pointer',
-                    transition: 'all 0.18s ease'
-                  }}
-                  title="All Portals Grid"
-                >
-                  <Grid size={14} />
-                  <span>All Portals</span>
-                </button>
+                  <button 
+                    type="button"
+                    className="btn btn-primary" 
+                    onClick={handleOpenAddModal}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1rem', fontSize: '0.85rem', fontWeight: 600, borderRadius: '0.55rem' }}
+                  >
+                    <Plus size={16} /> Add Web Portal
+                  </button>
+                </div>
               </div>
 
-              <div style={{ fontSize: '0.825rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                {websites.length} Portals
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.55rem', paddingTop: '0.55rem', borderTop: '1px solid var(--border-color)', fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                <span>{categoryGroups.length} Categories • {websites.length} Portals Total</span>
               </div>
             </div>
-          </div>
-
-          {/* Dynamic Category Filter Pills */}
-          <div className="category-filter-scroll">
-            {allCategoryTabs.map(cat => (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setSelectedCategory(cat)}
-                style={{
-                  padding: '0.4rem 0.85rem',
-                  borderRadius: '2rem',
-                  fontSize: '0.8rem',
-                  fontWeight: selectedCategory === cat ? 600 : 500,
-                  whiteSpace: 'nowrap',
-                  border: '1px solid',
-                  borderColor: selectedCategory === cat ? 'var(--primary-color)' : 'var(--border-color)',
-                  backgroundColor: selectedCategory === cat ? 'rgba(79, 70, 229, 0.08)' : 'var(--card-bg)',
-                  color: selectedCategory === cat ? 'var(--primary-color)' : 'var(--text-muted)',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {cat === 'All' ? '📁 All Categories' : cat}
-              </button>
-            ))}
-          </div>
-        </div>
-        </>
+          </>
         )}
 
         {/* Loading / Error States */}
@@ -868,325 +793,140 @@ export default function WebsitesPage() {
             )}
           </div>
         ) : selectedCategory === 'All' ? (
-          /* ALL CATEGORIES VIEW MODES: 'groups' | 'separate' | 'grid' */
-          <div>
-            {viewMode === 'separate' ? (
-              /* SEPARATE CATEGORY SECTIONS MODE */
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Layers size={22} color="var(--primary-color)" />
-                      <span>Separate Category Directory Sections</span>
-                    </h2>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                      Each category displayed in its own dedicated section with direct Box Apps, action methods, fees, and docs.
-                    </p>
-                  </div>
-                  <div style={{ fontSize: '0.825rem', fontWeight: 700, color: 'var(--primary-color)', backgroundColor: 'var(--primary-light)', padding: '0.35rem 0.85rem', borderRadius: '1rem', border: '1px solid var(--primary-border)' }}>
-                    {categoryGroups.length} Separate Categories
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                  {categoryGroups.map(group => {
-                    const IconComponent = group.meta.icon || Folder;
-                    return (
-                      <div 
-                        key={group.name} 
-                        className="separate-category-section-container"
-                        style={{ 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          gap: '1.25rem',
-                          padding: '1.4rem',
-                          backgroundColor: group.meta.bg || '#f8f9ff',
-                          border: `2px solid ${group.meta.color || '#4f46e5'}`,
-                          borderRadius: 'var(--radius-2xl)',
-                          boxShadow: `0 6px 22px ${group.meta.glow || 'rgba(79, 70, 229, 0.08)'}`,
-                          position: 'relative',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {/* Top 5px Vibrant Category Gradient Banner */}
-                        <div style={{ 
-                          position: 'absolute', 
-                          top: 0, 
-                          left: 0, 
-                          right: 0, 
-                          height: '5px', 
-                          background: group.meta.accentGradient || group.meta.color || '#4f46e5' 
-                        }} />
-
-                        {/* Separate Category Section Header Banner */}
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '1rem 1.35rem',
-                          backgroundColor: '#ffffff',
-                          border: `1.5px solid ${group.meta.border}`,
-                          borderRadius: 'var(--radius-xl)',
-                          boxShadow: `0 2px 10px rgba(0,0,0,0.03)`,
-                          flexWrap: 'wrap',
-                          gap: '0.85rem'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem' }}>
-                            <div style={{ 
-                              width: '46px', 
-                              height: '46px', 
-                              borderRadius: '0.75rem', 
-                              backgroundColor: group.meta.bg, 
-                              color: group.meta.color, 
-                              border: `2px solid ${group.meta.color}`, 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              justifyContent: 'center',
-                              boxShadow: `0 2px 8px ${group.meta.glow}`
-                            }}>
-                              <IconComponent size={25} />
-                            </div>
-                            <div>
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-                                <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: group.meta.color, letterSpacing: '-0.01em' }}>
-                                  {group.name}
-                                </h3>
-                                <span style={{ 
-                                  fontSize: '0.75rem', 
-                                  fontWeight: 700, 
-                                  color: group.meta.color, 
-                                  backgroundColor: group.meta.bg, 
-                                  border: `1.5px solid ${group.meta.border}`, 
-                                  padding: '0.2rem 0.65rem', 
-                                  borderRadius: '1rem' 
-                                }}>
-                                  {group.portalCount} {group.portalCount === 1 ? 'Portal' : 'Portals'}
-                                </span>
-                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                                  • {group.methodCount} Action Methods
-                                </span>
-                              </div>
-                              <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                                {group.meta.description}
-                              </p>
-                            </div>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setSelectedCategory(group.name)}
-                            style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.4rem',
-                              padding: '0.45rem 0.95rem',
-                              backgroundColor: group.meta.color,
-                              color: '#ffffff',
-                              border: 'none',
-                              borderRadius: '0.5rem',
-                              fontSize: '0.825rem',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              boxShadow: `0 3px 10px ${group.meta.glow}`,
-                              transition: 'all 0.18s ease'
-                            }}
-                          >
-                            <span>Sub-List View</span>
-                            <ChevronRight size={15} />
-                          </button>
-                        </div>
-
-                        {/* Separate Category App Boxes Grid */}
-                        {group.sites.length > 0 ? (
-                          <div className="portal-app-box-grid">
-                            {group.sites.map(site => renderPortalAppBox(site, group.meta))}
-                          </div>
-                        ) : (
-                          <div style={{
-                            padding: '2.5rem 1rem',
-                            backgroundColor: '#ffffff',
-                            border: `2px dashed ${group.meta.border}`,
-                            borderRadius: 'var(--radius-lg)',
-                            textAlign: 'center',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: '0.5rem'
-                          }}>
-                            <IconComponent size={32} color={group.meta.color} style={{ opacity: 0.5 }} />
-                            <p style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>
-                              No portals added in {group.name} yet
-                            </p>
-                            <button
-                              type="button"
-                              className="btn btn-primary"
-                              onClick={() => {
-                                setFormData(prev => ({ ...prev, category: group.name }));
-                                setIsAddModalOpen(true);
-                              }}
-                              style={{ padding: '0.45rem 0.85rem', fontSize: '0.825rem', marginTop: '0.35rem', backgroundColor: group.meta.color }}
-                            >
-                              <Plus size={14} /> Add First {group.name} Portal
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+          /* CHROME LAUNCHER SHORTCUTS DIRECTORY (List of Categories) */
+          <div className="card" style={{ padding: '1.75rem 1.25rem', marginBottom: '1.5rem', backgroundColor: '#ffffff', borderRadius: '1.25rem', boxShadow: '0 2px 14px rgba(0,0,0,0.04)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '0 0.5rem', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.85rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                <Folder size={20} color="var(--primary-color)" />
+                <span style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.01em' }}>
+                  Category Shortcuts
+                </span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--primary-color)', backgroundColor: 'var(--primary-light)', padding: '0.15rem 0.55rem', borderRadius: '1rem', border: '1px solid var(--primary-border)' }}>
+                  {categoryGroups.length}
+                </span>
               </div>
-            ) : viewMode === 'grid' ? (
-              /* ALL PORTALS GRID MODE */
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Grid size={20} color="var(--primary-color)" />
-                      <span>All Portals Unified Grid</span>
-                    </h2>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                      Complete directory of all registered portals and direct services.
-                    </p>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--primary-color)', backgroundColor: 'var(--primary-light)', padding: '0.3rem 0.75rem', borderRadius: '1rem', border: '1px solid var(--primary-border)' }}>
-                    {websites.length} Portals Total
-                  </div>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 500 }}>
+                Tap any icon to view portals & details
+              </span>
+            </div>
+
+            <div className="chrome-shortcuts-grid">
+              {categoryGroups.map(group => {
+                const IconComponent = group.meta.icon || Folder;
+                return (
+                  <button
+                    key={group.name}
+                    type="button"
+                    onClick={() => setSelectedCategory(group.name)}
+                    className="chrome-shortcut-item"
+                    title={`Open ${group.name} (${group.portalCount} portals)`}
+                  >
+                    {/* Chrome Style Circular Icon */}
+                    <div 
+                      className="chrome-shortcut-circle"
+                      style={{
+                        width: '58px',
+                        height: '58px',
+                        borderRadius: '50%',
+                        backgroundColor: group.meta.bg,
+                        color: group.meta.color,
+                        border: `2px solid ${group.meta.border}`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: `0 4px 14px ${group.meta.glow || 'rgba(0,0,0,0.06)'}`,
+                        transition: 'all 0.22s cubic-bezier(0.16, 1, 0.3, 1)',
+                        marginBottom: '0.55rem',
+                        position: 'relative'
+                      }}
+                    >
+                      <IconComponent size={26} strokeWidth={2.2} />
+
+                      {/* Small Count Badge on Top Right */}
+                      <span style={{
+                        position: 'absolute',
+                        top: '-3px',
+                        right: '-3px',
+                        backgroundColor: group.meta.color,
+                        color: '#ffffff',
+                        fontSize: '0.65rem',
+                        fontWeight: 800,
+                        width: '20px',
+                        height: '20px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 5px rgba(0,0,0,0.18)',
+                        border: '2px solid #ffffff'
+                      }}>
+                        {group.portalCount}
+                      </span>
+                    </div>
+
+                    {/* Chrome Style Label Below Icon */}
+                    <span 
+                      className="chrome-shortcut-label"
+                      style={{
+                        fontSize: '0.82rem',
+                        fontWeight: 700,
+                        color: 'var(--text-main)',
+                        textAlign: 'center',
+                        lineHeight: 1.25,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        wordBreak: 'break-word',
+                        maxWidth: '92px'
+                      }}
+                    >
+                      {group.name}
+                    </span>
+                  </button>
+                );
+              })}
+
+              {/* Add / Manage Categories Shortcut Icon (Chrome + Style) */}
+              <button
+                type="button"
+                onClick={() => setIsManageCategoriesOpen(true)}
+                className="chrome-shortcut-item"
+                title="Manage Categories"
+              >
+                <div 
+                  className="chrome-shortcut-circle"
+                  style={{
+                    width: '58px',
+                    height: '58px',
+                    borderRadius: '50%',
+                    backgroundColor: '#f8fafc',
+                    color: 'var(--text-muted)',
+                    border: '2px dashed #cbd5e1',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '0.55rem',
+                    transition: 'all 0.22s ease'
+                  }}
+                >
+                  <Plus size={24} />
                 </div>
-
-                <div className="portal-app-box-grid">
-                  {websites.map(site => renderPortalAppBox(site))}
-                </div>
-              </div>
-            ) : (
-              /* CATEGORY CARDS HUB MODE (Ultra Colour & UI Set) */
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                  <div>
-                    <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <Folder size={22} color="var(--primary-color)" />
-                      <span>Category Directory Groups</span>
-                    </h2>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                      Click on any category group below to inspect portals, direct portal methods, fees, and required documents.
-                    </p>
-                  </div>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary-color)', backgroundColor: 'var(--primary-light)', padding: '0.3rem 0.85rem', borderRadius: '1rem', border: '1px solid var(--primary-border)' }}>
-                    {categoryGroups.length} Categories Active
-                  </div>
-                </div>
-
-                <div className="category-group-grid">
-                  {categoryGroups.map(group => {
-                    const IconComponent = group.meta.icon || Folder;
-                    return (
-                      <div 
-                        key={group.name} 
-                        className="category-group-card"
-                        onClick={() => setSelectedCategory(group.name)}
-                        style={{
-                          border: `1.5px solid ${group.meta.border}`,
-                          position: 'relative',
-                          overflow: 'hidden'
-                        }}
-                      >
-                        {/* Top 4px Vibrant Accent Gradient Bar */}
-                        <div style={{ height: '4px', background: group.meta.accentGradient, position: 'absolute', top: 0, left: 0, right: 0 }} />
-
-                        {/* Top Row: Icon + Count Badges */}
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem', marginTop: '0.15rem' }}>
-                          <div 
-                            className="category-icon-wrapper" 
-                            style={{ 
-                              backgroundColor: group.meta.bg, 
-                              color: group.meta.color, 
-                              border: `1.5px solid ${group.meta.border}`,
-                              boxShadow: `0 4px 10px ${group.meta.glow || 'rgba(0,0,0,0.04)'}`
-                            }}
-                          >
-                            <IconComponent size={24} />
-                          </div>
-                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
-                            <span style={{ 
-                              fontSize: '0.75rem', 
-                              fontWeight: 700, 
-                              color: group.meta.color, 
-                              backgroundColor: group.meta.bg, 
-                              border: `1px solid ${group.meta.border}`,
-                              padding: '0.2rem 0.55rem', 
-                              borderRadius: '1rem' 
-                            }}>
-                              {group.portalCount} {group.portalCount === 1 ? 'Portal' : 'Portals'}
-                            </span>
-                            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                              {group.methodCount} Methods
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Category Title */}
-                        <h3 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '0.35rem', letterSpacing: '-0.01em' }}>
-                          {group.name}
-                        </h3>
-
-                        {/* Category Description */}
-                        <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', lineHeight: 1.45, marginBottom: '0.95rem', minHeight: '2.5rem' }}>
-                          {group.meta.description}
-                        </p>
-
-                        {/* Included Portals Preview Tags (Ultra Colored Matching Pills) */}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1.15rem', minHeight: '1.8rem' }}>
-                          {group.sites.slice(0, 3).map(site => (
-                            <span 
-                              key={site.id} 
-                              style={{ 
-                                fontSize: '0.72rem', 
-                                backgroundColor: group.meta.bg, 
-                                color: group.meta.color, 
-                                border: `1px solid ${group.meta.border}`,
-                                padding: '0.2rem 0.55rem', 
-                                borderRadius: '0.4rem',
-                                fontWeight: 600
-                              }}
-                            >
-                              {site.name}
-                            </span>
-                          ))}
-                          {group.sites.length > 3 && (
-                            <span style={{ fontSize: '0.72rem', color: group.meta.color, fontWeight: 700, padding: '0.2rem 0.35rem' }}>
-                              +{group.sites.length - 3} more
-                            </span>
-                          )}
-                          {group.sites.length === 0 && (
-                            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                              No portals added yet
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Card Footer Click Prompt (Rich Action Pill) */}
-                        <div style={{ 
-                          marginTop: 'auto', 
-                          padding: '0.55rem 0.85rem', 
-                          backgroundColor: group.meta.bg, 
-                          border: `1px solid ${group.meta.border}`,
-                          borderRadius: '0.55rem',
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between', 
-                          fontSize: '0.82rem', 
-                          fontWeight: 700, 
-                          color: group.meta.color,
-                          transition: 'all 0.18s ease'
-                        }}>
-                          <span>Explore Sub-List & Methods</span>
-                          <ChevronRight size={16} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+                <span 
+                  className="chrome-shortcut-label"
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    color: 'var(--text-muted)',
+                    textAlign: 'center',
+                    maxWidth: '92px'
+                  }}
+                >
+                  Manage
+                </span>
+              </button>
+            </div>
           </div>
         ) : (
           /* SUB LIST VIEW WITH METHODS (When Category is clicked / selected) */
@@ -1221,9 +961,18 @@ export default function WebsitesPage() {
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexWrap: 'wrap' }}>
                       <button 
                         type="button"
-                        className="btn btn-secondary" 
-                        onClick={() => setSelectedCategory('All')}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', padding: '0.5rem 0.95rem', fontSize: '0.85rem', fontWeight: 700 }}
+                        className="btn btn-secondary back-btn-responsive" 
+                        onClick={handleBackToCategories}
+                        style={{ 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          gap: '0.45rem', 
+                          padding: '0.55rem 1rem', 
+                          fontSize: '0.85rem', 
+                          fontWeight: 700,
+                          borderRadius: '0.6rem',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.06)'
+                        }}
                         title="Back to All Categories Directory"
                       >
                         <ArrowLeft size={16} /> Back to All Categories
