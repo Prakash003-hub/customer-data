@@ -17,6 +17,9 @@ import {
   AlertCircle,
   Tag,
   ShieldCheck,
+  ShieldAlert,
+  GraduationCap,
+  HardHat,
   Landmark,
   Car,
   Plane,
@@ -37,10 +40,73 @@ import {
   Info,
   Grid,
   List,
-  Share2
+  Share2,
+  HeartHandshake,
+  MapPin,
+  Briefcase
 } from 'lucide-react';
 
 const CATEGORY_META = {
+  'E-Sevai': {
+    icon: Landmark,
+    color: '#0891b2',
+    bg: '#ecfeff',
+    border: '#a5f3fc',
+    accentGradient: 'linear-gradient(90deg, #0891b2 0%, #06b6d4 100%)',
+    gradient: 'linear-gradient(180deg, rgba(8, 145, 178, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(8, 145, 178, 0.16)',
+    description: 'TNeGA e-Sevai, Revenue Certificates, Civil Registration & Citizen Services'
+  },
+  'E Sevai': {
+    icon: Landmark,
+    color: '#0891b2',
+    bg: '#ecfeff',
+    border: '#a5f3fc',
+    accentGradient: 'linear-gradient(90deg, #0891b2 0%, #06b6d4 100%)',
+    gradient: 'linear-gradient(180deg, rgba(8, 145, 178, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(8, 145, 178, 0.16)',
+    description: 'TNeGA e-Sevai, Revenue Certificates, Civil Registration & Citizen Services'
+  },
+  'Pension Services': {
+    icon: HeartHandshake,
+    color: '#e11d48',
+    bg: '#fff1f2',
+    border: '#fecdd3',
+    accentGradient: 'linear-gradient(90deg, #e11d48 0%, #f43f5e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(225, 29, 72, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(225, 29, 72, 0.16)',
+    description: 'Social Security Pensions, Old Age, Widow, Differently Abled & Welfare Schemes'
+  },
+  'Pension Services (ஓய்வூதியத் திட்டங்கள்)': {
+    icon: HeartHandshake,
+    color: '#e11d48',
+    bg: '#fff1f2',
+    border: '#fecdd3',
+    accentGradient: 'linear-gradient(90deg, #e11d48 0%, #f43f5e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(225, 29, 72, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(225, 29, 72, 0.16)',
+    description: 'Social Security Pensions, Old Age, Widow, Differently Abled & Welfare Schemes'
+  },
+  'PAN Card Services': {
+    icon: CreditCard,
+    color: '#2563eb',
+    bg: '#eff6ff',
+    border: '#bfdbfe',
+    accentGradient: 'linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(37, 99, 235, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(37, 99, 235, 0.16)',
+    description: 'New PAN Card (Form 49A), PAN Correction (CSF Form), e-KYC & Tax ID Services'
+  },
+  'PAN Card Services (பான் கார்டு சேவைகள்)': {
+    icon: CreditCard,
+    color: '#2563eb',
+    bg: '#eff6ff',
+    border: '#bfdbfe',
+    accentGradient: 'linear-gradient(90deg, #2563eb 0%, #3b82f6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(37, 99, 235, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(37, 99, 235, 0.16)',
+    description: 'New PAN Card (Form 49A), PAN Correction (CSF Form), e-KYC & Tax ID Services'
+  },
   'Identity & Governance': {
     icon: ShieldCheck,
     color: '#4f46e5',
@@ -61,6 +127,106 @@ const CATEGORY_META = {
     glow: 'rgba(5, 150, 105, 0.16)',
     description: 'PAN Card, Income Tax e-Filing, Net Banking & Tax Portals'
   },
+  'Vehicle & Transport Services': {
+    icon: Car,
+    color: '#d97706',
+    bg: '#fffbeb',
+    border: '#fde68a',
+    accentGradient: 'linear-gradient(90deg, #d97706 0%, #f59e0b 100%)',
+    gradient: 'linear-gradient(180deg, rgba(217, 119, 6, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(217, 119, 6, 0.16)',
+    description: 'Driving License, Sarathi, Vahan, RC, Insurance & Ticket Booking Portals'
+  },
+  'Vehicle & Transport Services (வாகனம் மற்றும் போக்குவரத்து சேவைகள்)': {
+    icon: Car,
+    color: '#d97706',
+    bg: '#fffbeb',
+    border: '#fde68a',
+    accentGradient: 'linear-gradient(90deg, #d97706 0%, #f59e0b 100%)',
+    gradient: 'linear-gradient(180deg, rgba(217, 119, 6, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(217, 119, 6, 0.16)',
+    description: 'Driving License, Sarathi, Vahan, RC, Insurance & Ticket Booking Portals'
+  },
+  'Land & Property Services': {
+    icon: MapPin,
+    color: '#15803d',
+    bg: '#f0fdf4',
+    border: '#bbf7d0',
+    accentGradient: 'linear-gradient(90deg, #15803d 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(21, 128, 61, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(21, 128, 61, 0.16)',
+    description: 'Patta, Chitta, FMB Sketch, Patta Transfer, EC, Certified Copy & Property Tax'
+  },
+  'Land & Property Services (நிலம் மற்றும் சொத்து சேவைகள்)': {
+    icon: MapPin,
+    color: '#15803d',
+    bg: '#f0fdf4',
+    border: '#bbf7d0',
+    accentGradient: 'linear-gradient(90deg, #15803d 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(21, 128, 61, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(21, 128, 61, 0.16)',
+    description: 'Patta, Chitta, FMB Sketch, Patta Transfer, EC, Certified Copy & Property Tax'
+  },
+  'Land Records & Property': {
+    icon: MapPin,
+    color: '#15803d',
+    bg: '#f0fdf4',
+    border: '#bbf7d0',
+    accentGradient: 'linear-gradient(90deg, #15803d 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(21, 128, 61, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(21, 128, 61, 0.16)',
+    description: 'Patta, Chitta, FMB Sketch, Patta Transfer, EC, Certified Copy & Property Tax'
+  },
+  'Land Services': {
+    icon: MapPin,
+    color: '#15803d',
+    bg: '#f0fdf4',
+    border: '#bbf7d0',
+    accentGradient: 'linear-gradient(90deg, #15803d 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(21, 128, 61, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(21, 128, 61, 0.16)',
+    description: 'Patta, Chitta, FMB Sketch, Patta Transfer, EC, Certified Copy & Property Tax'
+  },
+  'Land': {
+    icon: MapPin,
+    color: '#15803d',
+    bg: '#f0fdf4',
+    border: '#bbf7d0',
+    accentGradient: 'linear-gradient(90deg, #15803d 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(21, 128, 61, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(21, 128, 61, 0.16)',
+    description: 'Patta, Chitta, FMB Sketch, Patta Transfer, EC, Certified Copy & Property Tax'
+  },
+  'Business Services': {
+    icon: Briefcase,
+    color: '#0f766e',
+    bg: '#f0fdfa',
+    border: '#99f6e4',
+    accentGradient: 'linear-gradient(90deg, #0f766e 0%, #14b8a6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(15, 118, 110, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(15, 118, 110, 0.16)',
+    description: 'FSSAI Food Licence, GST Registration & Returns, Udyam MSME & Business Setup'
+  },
+  'Business Services (தொழில் மற்றும் வணிகச் சேவைகள்)': {
+    icon: Briefcase,
+    color: '#0f766e',
+    bg: '#f0fdfa',
+    border: '#99f6e4',
+    accentGradient: 'linear-gradient(90deg, #0f766e 0%, #14b8a6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(15, 118, 110, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(15, 118, 110, 0.16)',
+    description: 'FSSAI Food Licence, GST Registration & Returns, Udyam MSME & Business Setup'
+  },
+  'Business & Commerce': {
+    icon: Briefcase,
+    color: '#0f766e',
+    bg: '#f0fdfa',
+    border: '#99f6e4',
+    accentGradient: 'linear-gradient(90deg, #0f766e 0%, #14b8a6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(15, 118, 110, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(15, 118, 110, 0.16)',
+    description: 'FSSAI Food Licence, GST Registration & Returns, Udyam MSME & Business Setup'
+  },
   'Transport & Vehicles': {
     icon: Car,
     color: '#d97706',
@@ -77,7 +243,7 @@ const CATEGORY_META = {
     bg: '#f0f9ff',
     border: '#bae6fd',
     accentGradient: 'linear-gradient(90deg, #0284c7 0%, #0ea5e9 100%)',
-    gradient: 'linear-gradient(180deg, rgba(2, 132, 199, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    gradient: 'linear-gradient(180deg, rgba(22, 132, 199, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
     glow: 'rgba(2, 132, 199, 0.16)',
     description: 'Passport Seva, Visa, Train / Flight & Tourism Services'
   },
@@ -100,6 +266,326 @@ const CATEGORY_META = {
     gradient: 'linear-gradient(180deg, rgba(234, 88, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
     glow: 'rgba(234, 88, 12, 0.16)',
     description: 'Electricity, Water, LPG Gas, Fastag & Bill Payments'
+  },
+  'Electricity & EB Services': {
+    icon: Zap,
+    color: '#ea580c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #f97316 100%)',
+    gradient: 'linear-gradient(180deg, rgba(234, 88, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(234, 88, 12, 0.16)',
+    description: 'TANGEDCO EB New Connection, Name Transfer, Aadhaar Link, Bill Payment & Solar'
+  },
+  'Electricity & EB Services (மின்சார சேவைகள்)': {
+    icon: Zap,
+    color: '#ea580c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #f97316 100%)',
+    gradient: 'linear-gradient(180deg, rgba(234, 88, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(234, 88, 12, 0.16)',
+    description: 'TANGEDCO EB New Connection, Name Transfer, Aadhaar Link, Bill Payment & Solar'
+  },
+  'EB Services': {
+    icon: Zap,
+    color: '#ea580c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #f97316 100%)',
+    gradient: 'linear-gradient(180deg, rgba(234, 88, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(234, 88, 12, 0.16)',
+    description: 'TANGEDCO EB New Connection, Name Transfer, Aadhaar Link, Bill Payment & Solar'
+  },
+  'EB Services (மின்சார வாரியச் சேவைகள்)': {
+    icon: Zap,
+    color: '#ea580c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #f97316 100%)',
+    gradient: 'linear-gradient(180deg, rgba(234, 88, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(234, 88, 12, 0.16)',
+    description: 'TANGEDCO EB New Connection, Name Transfer, Aadhaar Link, Bill Payment & Solar'
+  },
+  'EB': {
+    icon: Zap,
+    color: '#ea580c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #f97316 100%)',
+    gradient: 'linear-gradient(180deg, rgba(234, 88, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(234, 88, 12, 0.16)',
+    description: 'TANGEDCO EB New Connection, Name Transfer, Aadhaar Link, Bill Payment & Solar'
+  },
+  'FSSAI Food Safety Services': {
+    icon: ShieldCheck,
+    color: '#16a34a',
+    bg: '#f0fdf4',
+    border: '#86efac',
+    accentGradient: 'linear-gradient(90deg, #16a34a 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(22, 163, 74, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(22, 163, 74, 0.16)',
+    description: 'FSSAI New Registration, License Renewal, Modification, Annual Return & FSDB'
+  },
+  'FSSAI Food Safety Services (உணவுப் பாதுகாப்பு சேவைகள்)': {
+    icon: ShieldCheck,
+    color: '#16a34a',
+    bg: '#f0fdf4',
+    border: '#86efac',
+    accentGradient: 'linear-gradient(90deg, #16a34a 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(22, 163, 74, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(22, 163, 74, 0.16)',
+    description: 'FSSAI New Registration, License Renewal, Modification, Annual Return & FSDB'
+  },
+  'FSSAI Food Safety': {
+    icon: ShieldCheck,
+    color: '#16a34a',
+    bg: '#f0fdf4',
+    border: '#86efac',
+    accentGradient: 'linear-gradient(90deg, #16a34a 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(22, 163, 74, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(22, 163, 74, 0.16)',
+    description: 'FSSAI New Registration, License Renewal, Modification, Annual Return & FSDB'
+  },
+  'FSSAI Food Services': {
+    icon: ShieldCheck,
+    color: '#16a34a',
+    bg: '#f0fdf4',
+    border: '#86efac',
+    accentGradient: 'linear-gradient(90deg, #16a34a 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(22, 163, 74, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(22, 163, 74, 0.16)',
+    description: 'FSSAI New Registration, License Renewal, Modification, Annual Return & FSDB'
+  },
+  'FSSAI': {
+    icon: ShieldCheck,
+    color: '#16a34a',
+    bg: '#f0fdf4',
+    border: '#86efac',
+    accentGradient: 'linear-gradient(90deg, #16a34a 0%, #22c55e 100%)',
+    gradient: 'linear-gradient(180deg, rgba(22, 163, 74, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(22, 163, 74, 0.16)',
+    description: 'FSSAI New Registration, License Renewal, Modification, Annual Return & FSDB'
+  },
+  'Police Services': {
+    icon: ShieldAlert,
+    color: '#1d4ed8',
+    bg: '#eff6ff',
+    border: '#93c5fd',
+    accentGradient: 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)',
+    gradient: 'linear-gradient(180deg, rgba(30, 58, 138, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(30, 58, 138, 0.16)',
+    description: 'TN Police Verification, Lost Document Report, Online Complaint, FIR, Cyber Crime & Kaaval Uthavi'
+  },
+  'Police Services (காவல்துறை சேவைகள்)': {
+    icon: ShieldAlert,
+    color: '#1d4ed8',
+    bg: '#eff6ff',
+    border: '#93c5fd',
+    accentGradient: 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)',
+    gradient: 'linear-gradient(180deg, rgba(30, 58, 138, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(30, 58, 138, 0.16)',
+    description: 'TN Police Verification, Lost Document Report, Online Complaint, FIR, Cyber Crime & Kaaval Uthavi'
+  },
+  'Police & Legal Services': {
+    icon: ShieldAlert,
+    color: '#1d4ed8',
+    bg: '#eff6ff',
+    border: '#93c5fd',
+    accentGradient: 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)',
+    gradient: 'linear-gradient(180deg, rgba(30, 58, 138, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(30, 58, 138, 0.16)',
+    description: 'TN Police Verification, Lost Document Report, Online Complaint, FIR, Cyber Crime & Kaaval Uthavi'
+  },
+  'Police': {
+    icon: ShieldAlert,
+    color: '#1d4ed8',
+    bg: '#eff6ff',
+    border: '#93c5fd',
+    accentGradient: 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)',
+    gradient: 'linear-gradient(180deg, rgba(30, 58, 138, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(30, 58, 138, 0.16)',
+    description: 'TN Police Verification, Lost Document Report, Online Complaint, FIR, Cyber Crime & Kaaval Uthavi'
+  },
+  'காவல்துறை சேவைகள்': {
+    icon: ShieldAlert,
+    color: '#1d4ed8',
+    bg: '#eff6ff',
+    border: '#93c5fd',
+    accentGradient: 'linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%)',
+    gradient: 'linear-gradient(180deg, rgba(30, 58, 138, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(30, 58, 138, 0.16)',
+    description: 'TN Police Verification, Lost Document Report, Online Complaint, FIR, Cyber Crime & Kaaval Uthavi'
+  },
+  'Competitive Exams': {
+    icon: GraduationCap,
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+    accentGradient: 'linear-gradient(90deg, #6d28d9 0%, #8b5cf6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(109, 40, 217, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(109, 40, 217, 0.16)',
+    description: 'TNPSC, TNUSRB, TRB, SSC, Railway (RRB), Banking (IBPS/SBI), UPSC & Agniveer Exams'
+  },
+  'Competitive Exams (போட்டித் தேர்வுகள்)': {
+    icon: GraduationCap,
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+    accentGradient: 'linear-gradient(90deg, #6d28d9 0%, #8b5cf6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(109, 40, 217, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(109, 40, 217, 0.16)',
+    description: 'TNPSC, TNUSRB, TRB, SSC, Railway (RRB), Banking (IBPS/SBI), UPSC & Agniveer Exams'
+  },
+  'Government Exams': {
+    icon: GraduationCap,
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+    accentGradient: 'linear-gradient(90deg, #6d28d9 0%, #8b5cf6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(109, 40, 217, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(109, 40, 217, 0.16)',
+    description: 'TNPSC, TNUSRB, TRB, SSC, Railway (RRB), Banking (IBPS/SBI), UPSC & Agniveer Exams'
+  },
+  'Exams': {
+    icon: GraduationCap,
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+    accentGradient: 'linear-gradient(90deg, #6d28d9 0%, #8b5cf6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(109, 40, 217, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(109, 40, 217, 0.16)',
+    description: 'TNPSC, TNUSRB, TRB, SSC, Railway (RRB), Banking (IBPS/SBI), UPSC & Agniveer Exams'
+  },
+  'EXAM': {
+    icon: GraduationCap,
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+    accentGradient: 'linear-gradient(90deg, #6d28d9 0%, #8b5cf6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(109, 40, 217, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(109, 40, 217, 0.16)',
+    description: 'TNPSC, TNUSRB, TRB, SSC, Railway (RRB), Banking (IBPS/SBI), UPSC & Agniveer Exams'
+  },
+  'போட்டித் தேர்வுகள்': {
+    icon: GraduationCap,
+    color: '#7c3aed',
+    bg: '#f5f3ff',
+    border: '#ddd6fe',
+    accentGradient: 'linear-gradient(90deg, #6d28d9 0%, #8b5cf6 100%)',
+    gradient: 'linear-gradient(180deg, rgba(109, 40, 217, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(109, 40, 217, 0.16)',
+    description: 'TNPSC, TNUSRB, TRB, SSC, Railway (RRB), Banking (IBPS/SBI), UPSC & Agniveer Exams'
+  },
+  'Passport Services': {
+    icon: Plane,
+    color: '#0284c7',
+    bg: '#f0f9ff',
+    border: '#7dd3fc',
+    accentGradient: 'linear-gradient(90deg, #0369a1 0%, #0284c7 100%)',
+    gradient: 'linear-gradient(180deg, rgba(2, 132, 199, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(2, 132, 199, 0.16)',
+    description: 'Fresh Passport, Re-issue, Renewal, Personal Particulars Change, PCC & Minor Passport'
+  },
+  'Passport Services (பாஸ்போர்ட் சேவைகள்)': {
+    icon: Plane,
+    color: '#0284c7',
+    bg: '#f0f9ff',
+    border: '#7dd3fc',
+    accentGradient: 'linear-gradient(90deg, #0369a1 0%, #0284c7 100%)',
+    gradient: 'linear-gradient(180deg, rgba(2, 132, 199, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(2, 132, 199, 0.16)',
+    description: 'Fresh Passport, Re-issue, Renewal, Personal Particulars Change, PCC & Minor Passport'
+  },
+  'Passport': {
+    icon: Plane,
+    color: '#0284c7',
+    bg: '#f0f9ff',
+    border: '#7dd3fc',
+    accentGradient: 'linear-gradient(90deg, #0369a1 0%, #0284c7 100%)',
+    gradient: 'linear-gradient(180deg, rgba(2, 132, 199, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(2, 132, 199, 0.16)',
+    description: 'Fresh Passport, Re-issue, Renewal, Personal Particulars Change, PCC & Minor Passport'
+  },
+  'PASSPORT': {
+    icon: Plane,
+    color: '#0284c7',
+    bg: '#f0f9ff',
+    border: '#7dd3fc',
+    accentGradient: 'linear-gradient(90deg, #0369a1 0%, #0284c7 100%)',
+    gradient: 'linear-gradient(180deg, rgba(2, 132, 199, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(2, 132, 199, 0.16)',
+    description: 'Fresh Passport, Re-issue, Renewal, Personal Particulars Change, PCC & Minor Passport'
+  },
+  'பாஸ்போர்ட் சேவைகள்': {
+    icon: Plane,
+    color: '#0284c7',
+    bg: '#f0f9ff',
+    border: '#7dd3fc',
+    accentGradient: 'linear-gradient(90deg, #0369a1 0%, #0284c7 100%)',
+    gradient: 'linear-gradient(180deg, rgba(2, 132, 199, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(2, 132, 199, 0.16)',
+    description: 'Fresh Passport, Re-issue, Renewal, Personal Particulars Change, PCC & Minor Passport'
+  },
+  'Welfare Board (நல வாரியம்)': {
+    icon: HardHat,
+    color: '#c2410c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #c2410c 100%)',
+    gradient: 'linear-gradient(180deg, rgba(194, 65, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(194, 65, 12, 0.16)',
+    description: 'TNUWWB Registration, Renewal, Education, Marriage, Maternity, Death, Pension & Schemes'
+  },
+  'Nalavariyam (நல வாரியம்)': {
+    icon: HardHat,
+    color: '#c2410c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #c2410c 100%)',
+    gradient: 'linear-gradient(180deg, rgba(194, 65, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(194, 65, 12, 0.16)',
+    description: 'TNUWWB Registration, Renewal, Education, Marriage, Maternity, Death, Pension & Schemes'
+  },
+  'Nalavariyam': {
+    icon: HardHat,
+    color: '#c2410c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #c2410c 100%)',
+    gradient: 'linear-gradient(180deg, rgba(194, 65, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(194, 65, 12, 0.16)',
+    description: 'TNUWWB Registration, Renewal, Education, Marriage, Maternity, Death, Pension & Schemes'
+  },
+  'NALAVARIYAM': {
+    icon: HardHat,
+    color: '#c2410c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #c2410c 100%)',
+    gradient: 'linear-gradient(180deg, rgba(194, 65, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(194, 65, 12, 0.16)',
+    description: 'TNUWWB Registration, Renewal, Education, Marriage, Maternity, Death, Pension & Schemes'
+  },
+  'நல வாரியம்': {
+    icon: HardHat,
+    color: '#c2410c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #c2410c 100%)',
+    gradient: 'linear-gradient(180deg, rgba(194, 65, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(194, 65, 12, 0.16)',
+    description: 'TNUWWB Registration, Renewal, Education, Marriage, Maternity, Death, Pension & Schemes'
+  },
+  'TNUWWB': {
+    icon: HardHat,
+    color: '#c2410c',
+    bg: '#fff7ed',
+    border: '#fed7aa',
+    accentGradient: 'linear-gradient(90deg, #ea580c 0%, #c2410c 100%)',
+    gradient: 'linear-gradient(180deg, rgba(194, 65, 12, 0.05) 0%, rgba(255, 255, 255, 0) 100%)',
+    glow: 'rgba(194, 65, 12, 0.16)',
+    description: 'TNUWWB Registration, Renewal, Education, Marriage, Maternity, Death, Pension & Schemes'
   }
 };
 
@@ -123,11 +609,60 @@ const SUGGESTED_DOCUMENTS = [
   "Passport Photo",
   "Bank Passbook",
   "Mobile No (OTP)",
+  "Existing PAN Card (பான் கார்டு நகல்)",
+  "Gazette / Marriage Certificate",
+  "RC Book (பதிவு புத்தகம்)",
+  "Original DL (அசல் ஓட்டுநர் உரிமம்)",
+  "Medical Certificate (Form 1A)",
+  "Vehicle Insurance Policy Copy",
   "Electricity Bill",
+  "Consumer Number (நுகர்வோர் எண்)",
+  "Latest EB Bill (சமீபத்திய மின் கட்டண ரசீது)",
+  "Wiring Completion Certificate",
+  "Building Completion Certificate",
+  "14 Digit FSSAI License Copy",
+  "Water Test Report (நீர் ஆய்வு அறிக்கை)",
+  "Machinery & Equipment List",
+  "Annual Turnover Declaration",
+  "Lost Document Details (பத்திரம்/RC/DL/IMEI எண்)",
+  "CSR / FIR Number (மனு / எஃப்.ஐ.ஆர் எண்)",
+  "Bank Statement with UTR No (சைபர் கிரைம் அறிக்கை)",
+  "Police Verification Offer Letter / Company Letter",
+  "PSTM Certificate (தமிழ் வழிக் கல்வி)",
+  "Degree / Provisional Certificate",
+  "Typewriting / Shorthand Certificate",
+  "Central OBC-NCL / EWS Certificate",
+  "Left Thumb Impression & Declaration",
+  "Nativity / Domicile Certificate",
+  "Old Original Passport (பழைய அசல் பாஸ்போர்ட்)",
+  "Annexure 'D' (பெற்றோர் ஒப்புதல் படிவம்)",
+  "PCC Offer Letter / Visa Copy",
+  "10th Marksheet (ECNR / Non-ECR Proof)",
+  "TNUWWB Member Card (நல வாரிய அட்டை)",
+  "VAO Employment Certificate (தொழில் சான்று)",
+  "Bonafide Certificate (படிப்புச் சான்றிதழ்)",
+  "Wedding Invitation (திருமண அழைப்பிதழ்)",
+  "RCH ID / PICME Copy (தாய்-சேய் நல அட்டை)",
+  "Spectacles Doctor Prescription & GST Bill",
   "Ration Card",
   "Income Certificate",
   "Caste Certificate",
   "Birth Certificate",
+  "Death Certificate",
+  "School TC",
+  "Patta / Chitta",
+  "Sale Deed (கிரயப் பத்திரம்)",
+  "Parent Document (தாய் பத்திரம்)",
+  "Encumbrance Certificate (EC - வில்லங்கச் சான்று)",
+  "Previous Patta Copy (முந்தைய பட்டா)",
+  "Property Tax Receipt (சொத்து வரி ரசீது)",
+  "Layout Plan / Sketch (மனை வரைபடம்)",
+  "Rental Agreement (வாடகை ஒப்பந்தம்)",
+  "Cancelled Cheque / Bank Statement",
+  "Business Address Proof (EB Bill)",
+  "UDID Card",
+  "CMUPT Card",
+  "Unmarried Certificate",
   "10th Marksheet",
   "Driving License"
 ];
